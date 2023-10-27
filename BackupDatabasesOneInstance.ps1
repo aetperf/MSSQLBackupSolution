@@ -38,6 +38,7 @@
     .LINK
         
     .EXAMPLE
+        PS C:\> $ProgressPreference = "SilentlyContinue"
         PS C:\> .\BackupDatabasesOneInstance.ps1 -SqlInstance MySQLServerInstance -BackupType Diff -BackupDirectory "S:\BACKUPS" -FileCount 1 -LogDirectory "D:\scripts\logs"
         This will perform a differential backups of all databases of the MySQLServerInstance Instance in the S:\BACKUPS Directory and log will be console displayed as well as writen in a timestamped file in the D:\scripts\logs directory
     
@@ -69,7 +70,8 @@ Add-LoggingTarget -Name Console -Configuration @{
         DEBUG = 'Gray'
         INFO  = 'White'
         ERROR  = 'DarkRed'
-    }
+    };
+    Level='DEBUG'
 }
 
 
@@ -228,6 +230,8 @@ if($ExitCode -eq 0){
 else{
     Write-Log -Level ERROR -Message "Backup ${BackupType} of databases on ${SqlInstance} : Failed in ${InstanceBackupDuration} seconds"
 }
+
+Wait-Logging
 
 Exit $ExitCode
 

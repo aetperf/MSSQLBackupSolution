@@ -56,7 +56,7 @@ param
     [Parameter(Mandatory)] [ValidateSet('Full','Diff','Log')] [string] $BackupType,
     [Parameter(Mandatory)] [string] $BackupDirectory,
     [Parameter(Mandatory)] [string] $CMSSqlInstance,
-    #[Parameter()] [Int16] $FileCount = 1,
+    [Parameter()] [Int16] $FileCount = 1,
     [Parameter()] [string] $Group = "All",
     [Parameter()] [Int16] $Timeout = 3600,
     [Parameter()] [string] $LogLevel = "INFO",
@@ -64,28 +64,33 @@ param
 )
 
 Set-LoggingDefaultLevel -Level $LogLevel
+$ProgressPreference = "SilentlyContinue"
 Add-LoggingTarget -Name Console -Configuration @{
     ColorMapping = @{
         DEBUG = 'Gray'
         INFO  = 'White'
         ERROR  = 'DarkRed'
-    }
+    };
+    Level='DEBUG'
 }
+
+$TimestampLog=Get-Date -UFormat "%Y-%m-%d_%H%M%S"
+
 
 
 $InstancesName=Get-DbaRegServer -SqlInstance $CMSSqlInstance -Group $Group | select -Unique Name
 $CMSBackupStartTimeStamp = Get-Date -UFormat "%Y-%m-%d %H:%M:%S"
 
-Write-Log -Level INFO -Message "Starting backup of ${Group} group of the CMS ${CMSSqlInstance} at ${CMSBackupStartTimeStamp}"
-$FailedInstance=0
+Write-Log -Level DEBUG -Message "Starting backup of ${Group} group of the CMS ${CMSSqlInstance} at ${CMSBackupStartTimeStamp}"
+$FailedInstance=@()
 $InstancesName |  ForEach-Object {
     $InstanceName=$_.Name
-    Write-Log -Level INFO -Message "Starting backup of instance ${InstanceName}"
-    .\BackupDatabasesOneInstance.ps1 -SqlInstance $InstanceName -BackupType $BackupType -BackupDirectory $BackupDirectory -LogDirectory $LogDirectory
+    Write-Log -Level DEBUG -Message "Starting backup of instance ${InstanceName}"
+    .\BackupDatabasesOneInstance.ps1 -SqlInstance $InstanceName -BackupType $BackupType -FileCount $FileCount -BackupDirectory $BackupDirectory -LogDirectory $LogDirectory 
     $RC=$LASTEXITCODE
     if($RC -ne 0){
-        $FailedInstance++
-    }
+        $FailedInstance+=$InstanceName
+    }  
 }
 
 $CMSBackupEndTimeStamp = Get-Date -UFormat "%Y-%m-%d %H:%M:%S"
@@ -93,11 +98,19 @@ $tspan= New-TimeSpan -Start $CMSBackupStartTimeStamp -End $CMSBackupEndTimeStamp
 
 $CMSBackupDuration=$tspan.Seconds
 
-if($FailedInstance -eq 0){
-    Write-Log -Level INFO -Message "Backups of ${Group} group of the CMS ${CMSSqlInstance} finish successfully in ${CMSBackupDuration} seconds"
+if($FailedInstance.count -eq 0){
+    $NbFailedInstance=0
+    Write-Log -Level DEBUG -Message "Backups of ${Group} group of the CMS ${CMSSqlInstance} finish successfully in ${CMSBackupDuration} seconds"
 }
 else{
-    Write-Log -Level ERROR -Message "Backups of ${Group} group of the CMS ${CMSSqlInstance} finish with errors in ${CMSBackupDuration} seconds. Failed instance : ${FailedInstance}"
-
+    $NbFailedInstance=$FailedInstance.count    
+    $FailedInstance | ForEach-Object {
+      $NameOfInstanceFailed+=$_+" "
+    }
+    Write-Log -Level DEBUG -Message "Backups of ${Group} group of the CMS ${CMSSqlInstance} finish with errors in ${CMSBackupDuration} seconds. ${NbFailedInstance} Failed instance : ${NameOfInstanceFailed}"
 }
+
+Wait-Logging
+
+Exit $NbFailedInstance
 
