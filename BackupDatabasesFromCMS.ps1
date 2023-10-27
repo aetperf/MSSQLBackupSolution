@@ -1,13 +1,16 @@
  <#
     .SYNOPSIS
-        Backup of all databases of the CMS to target Directory
+        Backup databases of the CMS to target Directory using groups
     .DESCRIPTION
         Objective : Backup all databases (except tempdb) to a target Backup directory in parallel
         the script will create a .bak; .diff or .trn file depending of the backup type (full; diff, log)
         "${BackupDirectory}\servername\instancename\dbname\backuptype\servername_dbname_backuptype_timestamp.${BackupExtension}"
        
-    .PARAMETER SqlInstance
-        The SQL Server instance hosting the databases to be backed up.
+    .PARAMETER CMSSqlInstance
+        The SQL Server instance hosting the CMS database to list instances to backup.
+
+    .PARAMETER Group
+        The root group in the CMS where SQLInstances to backup will be listed.
 
     .PARAMETER BackupType
         The SQL Server backup type (Full, Diff, Log).
@@ -20,7 +23,7 @@
         Default 1
         
     .PARAMETER LogDirectory
-    Directory where a log file can be stored (Optionnal)
+        Directory where a log file can be stored (Optionnal)
 
     .NOTES
         Tags: DisasterRecovery, Backup, Restore
@@ -32,20 +35,16 @@
         Dependencies : 
             Install-Module Logging
             Install-Module dbatools
-            Install-Module JoinModule
 
-        Compatibility : Powershell 7.3+
+        Compatibility : Powershell 5+
 
     .LINK
         
     .EXAMPLE
-        PS C:\> .\BackupDatabasesOneInstance.ps1 -SqlInstance MySQLServerInstance -BackupType Diff -BackupDirectory "S:\BACKUPS" -FileCount 1 -LogDirectory "D:\scripts\logs"
-        This will perform a differential backups of all databases of the MySQLServerInstance Instance in the S:\BACKUPS Directory and log will be console displayed as well as writen in a timestamped file in the D:\scripts\logs directory
-    
-        PS C:\> .\BackupDatabasesOneInstance.ps1 -SqlInstance MySQLServerInstance -BackupType Full -BackupDirectory "S:\BACKUPS" -FileCount 4
-        This will perform a Full backups of all databases of the MySQLServerInstance Instance in the S:\BACKUPS Directory with backup files slitted into 4 parts and log will be console displayed
-
-        PS C:\> D:\MSSQLBackupSolution\BackupDatabasesOneInstance.ps1 -SqlInstance $SqlInstance -BackupType $Backuptype -BackupDirectory $BackupDirectory
+        PS C:\> $ProgressPreference = "SilentlyContinue"
+        PS C:\> BackupDatabasesFromCMS.ps1 -CMSSqlInstance "localhost\DBA01" -Group "All" -BackupType "Full" -BackupDirectory "G:\BACKUPDB"  -LogDirectory "D:\MSSQLBackupSolution\Logs"
+        PS C:\> BackupDatabasesFromCMS.ps1 -CMSSqlInstance "localhost\DBA01" -Group "All" -BackupType "Diff" -BackupDirectory "G:\BACKUPDB"  -LogDirectory "D:\MSSQLBackupSolution\Logs"
+        PS C:\> BackupDatabasesFromCMS.ps1 -CMSSqlInstance "localhost\DBA01" -Group "All" -BackupType "Log" -BackupDirectory "G:\BACKUPDB"  -LogDirectory "D:\MSSQLBackupSolution\Logs"
 
     #>
 
@@ -63,6 +62,9 @@ param
     [Parameter()] [string] $LogDirectory
 )
 
+#############################################################################################
+## LOGGING PREPARATION
+#############################################################################################
 Set-LoggingDefaultLevel -Level $LogLevel
 $ProgressPreference = "SilentlyContinue"
 Add-LoggingTarget -Name Console -Configuration @{
@@ -77,7 +79,9 @@ Add-LoggingTarget -Name Console -Configuration @{
 $TimestampLog=Get-Date -UFormat "%Y-%m-%d_%H%M%S"
 
 
-
+#############################################################################################
+## BACKUP PREPARATION : Get Instances in CMS to run BackupDatabasesOneInstance.ps1 script
+#############################################################################################
 $InstancesName=Get-DbaRegServer -SqlInstance $CMSSqlInstance -Group $Group | select -Unique Name
 $CMSBackupStartTimeStamp = Get-Date -UFormat "%Y-%m-%d %H:%M:%S"
 
