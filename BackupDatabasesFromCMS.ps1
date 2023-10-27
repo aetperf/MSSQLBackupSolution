@@ -87,6 +87,10 @@ $CMSBackupStartTimeStamp = Get-Date -UFormat "%Y-%m-%d %H:%M:%S"
 
 Write-Log -Level DEBUG -Message "Starting backup of ${Group} group of the CMS ${CMSSqlInstance} at ${CMSBackupStartTimeStamp}"
 $FailedInstance=@()
+
+#############################################################################################
+## BACKUP : run BackupDatabasesOneInstance.ps1 script for Each Instance found
+#############################################################################################
 $InstancesName |  ForEach-Object {
     $InstanceName=$_.Name
     Write-Log -Level DEBUG -Message "Starting backup of instance ${InstanceName}"
@@ -97,6 +101,9 @@ $InstancesName |  ForEach-Object {
     }  
 }
 
+#############################################################################################
+## LOG and EXITCODE
+#############################################################################################
 $CMSBackupEndTimeStamp = Get-Date -UFormat "%Y-%m-%d %H:%M:%S"
 $tspan= New-TimeSpan -Start $CMSBackupStartTimeStamp -End $CMSBackupEndTimeStamp
 
