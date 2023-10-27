@@ -63,7 +63,9 @@ param
     [Parameter()] [string] $logDatabase = "MSSQLBackupSolutionDB"
 )
 
-
+#############################################################################################
+## LOGGING PREPARATION
+#############################################################################################
 Set-LoggingDefaultLevel -Level $LogLevel
 Add-LoggingTarget -Name Console -Configuration @{
     ColorMapping = @{
@@ -91,6 +93,8 @@ if ($PSBoundParameters.ContainsKey('LogDirectory'))
     }
 }
 
+
+
 $InstanceBackupStartTimeStamp=Get-Date
 
 Write-Log -Level INFO -Message "Parameter SQLInstance : ${SqlInstance}"
@@ -100,6 +104,9 @@ Write-Log -Level INFO -Message "Parameter FileCount : ${FileCount}"
 
 $ExitCode=0
 
+#############################################################################################
+## BACKUP PREPARATION : Get Databases to Backup
+#############################################################################################
 
 try{
     switch ( $BackupType ) 
@@ -131,6 +138,10 @@ catch
 
 Write-Log -Level INFO -Message "Backup Extension : ${BackupExtension}"
 
+#############################################################################################
+## BACKUP
+#############################################################################################
+
 $Databases |  ForEach-Object {
     $DatabaseBackupStartTimeStamp = Get-Date -UFormat "%Y-%m-%d %H:%M:%S"
     $DatabaseName=$_.Name
@@ -139,7 +150,9 @@ $Databases |  ForEach-Object {
     $FullUserName="${Env:UserDomain}\${Env:UserName}"
 
     try{
+        ### BACKUP using dbatools
         $SilentRes=Backup-DbaDatabase -SqlInstance $SqlInstance -Database $DatabaseName -Type $BackupType -CompressBackup -Checksum -Verify -FileCount $FileCount -Path "${BackupDirectory}\servername\instancename\dbname\backuptype" -FilePath "servername_dbname_backuptype_timestamp.${BackupExtension}" -TimeStampFormat "yyyyMMdd_HHmm" -ReplaceInName -CreateFolder -WarningVariable WarningVariable -OutVariable BackupResults -EnableException
+        
         $BackupDuration = $BackupResults.Duration
         $BackupCompressedSize = $BackupResults.CompressedBackupSize
         Write-DbaDbTableData -SqlInstance $logSQLInstance -Database $logDatabase -InputObject $BackupResults -Table dbo.BackupResults -AutoCreateTable -UseDynamicStringLength
@@ -217,6 +230,10 @@ $Databases |  ForEach-Object {
     }
 
 }
+
+#############################################################################################
+## Finish wih Compute ExitCode : Exit with non zero if any database backup failed
+#############################################################################################
 
 Start-Sleep -Seconds 1 
 
