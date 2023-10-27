@@ -43,7 +43,9 @@
     .EXAMPLE
         PS C:\> $ProgressPreference = "SilentlyContinue"
         PS C:\> BackupDatabasesFromCMS.ps1 -CMSSqlInstance "localhost\DBA01" -Group "All" -BackupType "Full" -BackupDirectory "G:\BACKUPDB"  -LogDirectory "D:\MSSQLBackupSolution\Logs"
+    .EXAMPLE   
         PS C:\> BackupDatabasesFromCMS.ps1 -CMSSqlInstance "localhost\DBA01" -Group "All" -BackupType "Diff" -BackupDirectory "G:\BACKUPDB"  -LogDirectory "D:\MSSQLBackupSolution\Logs"
+    .EXAMPLE    
         PS C:\> BackupDatabasesFromCMS.ps1 -CMSSqlInstance "localhost\DBA01" -Group "All" -BackupType "Log" -BackupDirectory "G:\BACKUPDB"  -LogDirectory "D:\MSSQLBackupSolution\Logs"
 
     #>

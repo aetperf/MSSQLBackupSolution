@@ -41,10 +41,10 @@
         PS C:\> $ProgressPreference = "SilentlyContinue"
         PS C:\> .\BackupDatabasesOneInstance.ps1 -SqlInstance MySQLServerInstance -BackupType Diff -BackupDirectory "S:\BACKUPS" -FileCount 1 -LogDirectory "D:\scripts\logs"
         This will perform a differential backups of all databases of the MySQLServerInstance Instance in the S:\BACKUPS Directory and log will be console displayed as well as writen in a timestamped file in the D:\scripts\logs directory
-    
+    .EXAMPLE
         PS C:\> .\BackupDatabasesOneInstance.ps1 -SqlInstance MySQLServerInstance -BackupType Full -BackupDirectory "S:\BACKUPS" -FileCount 4
         This will perform a Full backups of all databases of the MySQLServerInstance Instance in the S:\BACKUPS Directory with backup files slitted into 4 parts and log will be console displayed
-
+    .EXAMPLE
         PS C:\> D:\MSSQLBackupSolution\BackupDatabasesOneInstance.ps1 -SqlInstance $SqlInstance -BackupType $Backuptype -BackupDirectory $BackupDirectory
 
     #>
