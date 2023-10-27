@@ -2,7 +2,7 @@
     .SYNOPSIS
         Backup databases of the CMS to target Directory using groups
     .DESCRIPTION
-        Objective : Backup all databases (except tempdb) to a target Backup directory in parallel
+        Objective : List SQL Server Instances from a CMS and Backup all databases (except tempdb) to a target Backup directory
         the script will create a .bak; .diff or .trn file depending of the backup type (full; diff, log)
         "${BackupDirectory}\servername\instancename\dbname\backuptype\servername_dbname_backuptype_timestamp.${BackupExtension}"
        
@@ -47,8 +47,6 @@
         PS C:\> BackupDatabasesFromCMS.ps1 -CMSSqlInstance "localhost\DBA01" -Group "All" -BackupType "Log" -BackupDirectory "G:\BACKUPDB"  -LogDirectory "D:\MSSQLBackupSolution\Logs"
 
     #>
-
-
 
 param 
 (
