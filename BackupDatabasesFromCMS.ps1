@@ -59,7 +59,9 @@ param
     [Parameter()] [string] $Group = "All",
     [Parameter()] [Int16] $Timeout = 3600,
     [Parameter()] [string] $LogLevel = "INFO",
-    [Parameter()] [string] $LogDirectory
+    [Parameter()] [string] $LogDirectory,
+    [Parameter()] [string] $LogSQLInstance = "localhost\DBA01",
+    [Parameter()] [string] $LogDatabase = "MSSQLBackupSolutionDB"
 )
 
 #############################################################################################
@@ -94,7 +96,7 @@ $FailedInstance=@()
 $InstancesName |  ForEach-Object {
     $InstanceName=$_.Name
     Write-Log -Level DEBUG -Message "Starting backup of instance ${InstanceName}"
-    .\BackupDatabasesOneInstance.ps1 -SqlInstance $InstanceName -BackupType $BackupType -FileCount $FileCount -BackupDirectory $BackupDirectory -LogDirectory $LogDirectory 
+    .\BackupDatabasesOneInstance.ps1 -SqlInstance $InstanceName -BackupType $BackupType -FileCount $FileCount -BackupDirectory $BackupDirectory -LogDirectory $LogDirectory -LogSQLInstance $LogSQLInstance -LogDatabase $LogDatabase
     $RC=$LASTEXITCODE
     if($RC -ne 0){
         $FailedInstance+=$InstanceName

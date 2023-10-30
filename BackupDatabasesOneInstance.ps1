@@ -59,8 +59,8 @@ param
     [Parameter()] [Int16] $FileCount = 1,
     [Parameter()] [string] $LogLevel = "INFO",
     [Parameter()] [string] $LogDirectory,
-    [Parameter()] [string] $logSQLInstance = "localhost\DBA01",
-    [Parameter()] [string] $logDatabase = "MSSQLBackupSolutionDB"
+    [Parameter()] [string] $LogSQLInstance = "localhost\DBA01",
+    [Parameter()] [string] $LogDatabase = "MSSQLBackupSolutionDB"
 )
 
 #############################################################################################
