@@ -16,7 +16,7 @@
         The SQL Server backup type (Full, Diff, Log).
 
     .PARAMETER BackupDirectory
-        Target root directory
+        Target root directory (target backup folder root in each target MSSQL Instance)
 
     .PARAMETER FileCount
         Number of files to split the backup (improve performance of backup and restore)
