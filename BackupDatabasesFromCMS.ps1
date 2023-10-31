@@ -125,5 +125,9 @@ else{
 
 Wait-Logging
 
-Exit $NbFailedInstance
+$Exitcode=0
+If ($NbFailedInstance -gt 0)
+{$Exitcode=1}
+
+Exit $ExitCode
 

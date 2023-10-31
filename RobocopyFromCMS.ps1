@@ -135,5 +135,9 @@ else{
 
 Wait-Logging
 
-Exit $NbFailedRobocopy
+$ExitCode=0
+if ($NbFailedRobocopy -gt 0)
+{$ExitCode=1}
+
+Exit $ExitCode
 
