@@ -239,7 +239,7 @@ Start-Sleep -Seconds 1
 
 $InstanceBackupEndTimeStamp=Get-Date
 $tspan= New-TimeSpan -Start $InstanceBackupStartTimeStamp -End $InstanceBackupEndTimeStamp
-$InstanceBackupDuration=$tspan.Seconds
+$InstanceBackupDuration=$tspan.TotalSeconds
 
 if($ExitCode -eq 0){
     Write-Log -Level INFO -Message "Backup ${BackupType} of databases on ${SqlInstance} : Successful in ${InstanceBackupDuration} seconds"

@@ -55,6 +55,7 @@ param
     [Parameter(Mandatory)] [ValidateSet('Full','Diff','Log')] [string] $BackupType,
     [Parameter(Mandatory)] [string] $BackupDirectory,
     [Parameter(Mandatory)] [string] $CMSSqlInstance,
+    [Parameter(Mandatory)] [string] $ExecDirectory,
     [Parameter()] [Int16] $FileCount = 1,
     [Parameter()] [string] $Group = "All",
     [Parameter()] [Int16] $Timeout = 3600,
@@ -96,6 +97,7 @@ $FailedInstance=@()
 $InstancesName |  ForEach-Object {
     $InstanceName=$_.Name
     Write-Log -Level DEBUG -Message "Starting backup of instance ${InstanceName}"
+    cd $ExecDirectory
     .\BackupDatabasesOneInstance.ps1 -SqlInstance $InstanceName -BackupType $BackupType -FileCount $FileCount -BackupDirectory $BackupDirectory -LogDirectory $LogDirectory -LogSQLInstance $LogSQLInstance -LogDatabase $LogDatabase
     $RC=$LASTEXITCODE
     if($RC -ne 0){
@@ -109,7 +111,7 @@ $InstancesName |  ForEach-Object {
 $CMSBackupEndTimeStamp = Get-Date -UFormat "%Y-%m-%d %H:%M:%S"
 $tspan= New-TimeSpan -Start $CMSBackupStartTimeStamp -End $CMSBackupEndTimeStamp
 
-$CMSBackupDuration=$tspan.Seconds
+$CMSBackupDuration=$tspan.TotalSeconds
 
 if($FailedInstance.count -eq 0){
     $NbFailedInstance=0

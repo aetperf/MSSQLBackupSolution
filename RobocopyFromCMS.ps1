@@ -47,6 +47,7 @@ param
     [Parameter(Mandatory)] [string] $CentralBackupDirectory,
     [Parameter(Mandatory)] [string] $RemoteBackupDirectory,
     [Parameter(Mandatory)] [string] $CMSSqlInstance,
+    [Parameter(Mandatory)] [string] $ExecDirectory,
     [Parameter()] [string] $Group = "All",
     [Parameter()] [Int16] $Timeout = 3600,
     [Parameter()] [string] $LogLevel = "INFO",
@@ -81,7 +82,7 @@ if ($PSBoundParameters.ContainsKey('LogDirectory'))
 }
 
 
-
+cd $ExecDirectory
 import-module .\Start-ConsoleProcess.ps1 -Force
 import-module .\Invoke-Robocopy.ps1 -Force
 
@@ -117,7 +118,7 @@ $ServersName |  ForEach-Object {
 $CMSRobocopyEndTimeStamp = Get-Date -UFormat "%Y-%m-%d %H:%M:%S"
 $tspan= New-TimeSpan -Start $CMSRobocopyStartTimeStamp -End $CMSRobocopyEndTimeStamp
 
-$CMSRobocopyDuration=$tspan.Seconds
+$CMSRobocopyDuration=$tspan.TotalSeconds
 
 
 
