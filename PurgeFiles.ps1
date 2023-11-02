@@ -151,7 +151,7 @@ if ($ExitCode -eq 0)
         $result | ForEach-Object {
             $fileName=$_.FullName
             Write-Log -Level INFO -Message "Starting the delete of ${fileName}"
-            Remove-Item -Path $_.FullName -WhatIf
+            Remove-Item -Path $_.FullName
         }        
     }
     catch {    
