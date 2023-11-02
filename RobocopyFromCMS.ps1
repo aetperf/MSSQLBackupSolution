@@ -20,6 +20,9 @@
         Number of files to split the backup (improve performance of backup and restore)
         Default 1
         
+    .PARAMETER ExecDirectory
+        Directory of the script
+    
     .PARAMETER LogDirectory
         Directory where a log file can be stored (Optionnal)
 
@@ -41,7 +44,7 @@
     .EXAMPLE
         PS C:\> $ProgressPreference = "SilentlyContinue"
     .EXAMPLE    
-        PS C:\> RobocopyFromCMS.ps1 -CMSSqlInstance "localhost\DBA01" -Group "All" -CentralBackupDirectory "D:\MSSQLBackupsCentral" -RemoteBackupDirectory "G$\BACKUPDB" -LogDirectory "D:\MSSQLBackupSolution\Logs"
+        PS C:\> RobocopyFromCMS.ps1 -CMSSqlInstance "localhost\DBA01" -Group "All" -CentralBackupDirectory "D:\MSSQLBackupsCentral" -RemoteBackupDirectory "G$\BACKUPDB" -ExecDirectory "D:\MSSQLBackupSolution" -LogDirectory "D:\MSSQLBackupSolution\Logs"
 
     #>
 
