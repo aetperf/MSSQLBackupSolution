@@ -56,7 +56,7 @@ param
 ## LOGGING PREPARATION
 #############################################################################################
 
-Set-LoggingDefaultLevel -Level $LogLevel
+Set-LoggingDefaultLevel -Level INFO
 $ProgressPreference = "SilentlyContinue"
 Add-LoggingTarget -Name Console -Configuration @{
     ColorMapping = @{

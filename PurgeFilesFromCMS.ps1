@@ -39,7 +39,7 @@
     .LINK
         
     .EXAMPLE
-        PurgeFilesFromCMS.ps1 -FileType "ShellLog" -CMSSqlInstance "localhost\DBA01" -Group "All" -RemoteBackupDirectory "G$\BACKUPDB" -ExecDirectory "D:\MSSQLBackupSolution" -LogDirectory "D:\MSSQLBackupSolution\Logs" -HoursDelay 168
+        PurgeFilesFromCMS.ps1 -FileType "Log" -CMSSqlInstance "localhost\DBA01" -Group "All" -RemoteBackupDirectory "G$\BACKUPDB" -ExecDirectory "D:\MSSQLBackupSolution" -LogDirectory "D:\MSSQLBackupSolution\Logs" -HoursDelay 168
     .EXAMPLE    
         PurgeFilesFromCMS.ps1 -FileType "Full" -CMSSqlInstance "localhost\DBA01" -Group "All" -RemoteBackupDirectory "G$\BACKUPDB" -ExecDirectory "D:\MSSQLBackupSolution" -LogDirectory "D:\MSSQLBackupSolution\Logs" -HoursDelay 168
 
