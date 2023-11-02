@@ -118,7 +118,7 @@ try{
                 }
             "Diff" 
                 {
-                    $BackupExtension="bak" 
+                    $BackupExtension="diff" 
                     $Databases = Get-DbaDatabase -SqlInstance $SqlInstance -ExcludeDatabase "tempdb","model","master" -EnableException -WarningVariable WarningVariable | Where-Object {($_.IsUpdateable) -and ($_.Status -ilike "Normal*")}
                 }
             "Log"  
