@@ -8,10 +8,13 @@
         The SQL Server instance hosting the CMS database to list instances to backup.
 
     .PARAMETER Group
-        The root group in the CMS where SQLInstances to backup will be listed.
+        The root group in the CMS from where SQLInstances to backup will be listed.
 
-    .PARAMETER BackupDirectory
-        Target root directory
+    .PARAMETER CentralBackupDirectory
+        directory where all the backup will be centralized
+
+    .PARAMETER RemoteBackupDirectory
+        root directory on the target computers
 
     .PARAMETER FileCount
         Number of files to split the backup (improve performance of backup and restore)
@@ -38,7 +41,7 @@
     .EXAMPLE
         PS C:\> $ProgressPreference = "SilentlyContinue"
     .EXAMPLE    
-        PS C:\> RobocopyFromCMS.ps1 -CMSSqlInstance "localhost\DBA01" -Group "All" -CentralBackupDirectory "D:\MSSQLBackupsCentral" -RemoteBackupDirectory "G$\BACKUPDB"  -LogDirectory "D:\MSSQLBackupSolution\Logs"
+        PS C:\> RobocopyFromCMS.ps1 -CMSSqlInstance "localhost\DBA01" -Group "All" -CentralBackupDirectory "D:\MSSQLBackupsCentral" -RemoteBackupDirectory "G$\BACKUPDB" -LogDirectory "D:\MSSQLBackupSolution\Logs"
 
     #>
 
