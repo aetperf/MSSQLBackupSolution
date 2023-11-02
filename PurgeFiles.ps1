@@ -5,7 +5,7 @@
         
 
     .PARAMETER FileType
-        The file type (Full, Diff, Tran, Log). Will determine the extensions of files
+        The file type (Full, Diff, Log, ShellLog). Will determine the extensions of files
 
     .PARAMETER RootDirectory
         Target root directory. The directory that will be to root for recursion
@@ -31,20 +31,20 @@
     .LINK
         
     .EXAMPLE
-        PS C:\> PurgeFiles.ps1 -FileType "Full" -RootDirectory "D:\MSSQLBackupsCentral" -LogDirectory "D:\MSSQLBackupSolution\Logs" -HoursDelay 168
+        PurgeFiles.ps1 -FileType "Full" -RootDirectory "D:\MSSQLBackupsCentral" -LogDirectory "D:\MSSQLBackupSolution\Logs" -HoursDelay 168
     .EXAMPLE   
-        PS C:\> PurgeFiles.ps1 -FileType "Diff" -RootDirectory "D:\MSSQLBackupsCentral" -LogDirectory "D:\MSSQLBackupSolution\Logs" -HoursDelay 168
+        PurgeFiles.ps1 -FileType "Diff" -RootDirectory "D:\MSSQLBackupsCentral" -LogDirectory "D:\MSSQLBackupSolution\Logs" -HoursDelay 168
     .EXAMPLE    
-        PS C:\> PurgeFiles.ps1 -FileType "Trn" -RootDirectory "D:\MSSQLBackupsCentral" -LogDirectory "D:\MSSQLBackupSolution\Logs" -HoursDelay 168
+        PurgeFiles.ps1 -FileType "Log" -RootDirectory "D:\MSSQLBackupsCentral" -LogDirectory "D:\MSSQLBackupSolution\Logs" -HoursDelay 168
     .EXAMPLE    
-        PS C:\> PurgeFiles.ps1 -FileType "Log" -RootDirectory "D:\MSSQLBackupSolution\Logs" -LogDirectory "D:\MSSQLBackupSolution\Logs" -HoursDelay 168
+        PurgeFiles.ps1 -FileType "ShellLog" -RootDirectory "D:\MSSQLBackupSolution\Logs" -LogDirectory "D:\MSSQLBackupSolution\Logs" -HoursDelay 168
 
 
     #>
 
 param 
 (
-    [Parameter(Mandatory)] [ValidateSet('Full','Diff','Tran','Log')] [string] $FileType,
+    [Parameter(Mandatory)] [ValidateSet('Full','Diff','Log','ShellLog')] [string] $FileType,
     [Parameter()] [string] $RootDirectory,
     [Parameter()] [string] $LogDirectory,
     [Parameter()] [int] $HoursDelay=168, #24*7
@@ -108,13 +108,13 @@ switch ( $FileType )
             }
         "Diff" 
             {
-                $FileExtension="bak" 
+                $FileExtension="diff" 
             }
-        "Tran"  
+        "Log"  
             {
                 $FileExtension="trn"  
             } 
-        "Log"  
+        "ShellLog"  
             {
                 $FileExtension="log"  
             }    
@@ -135,8 +135,7 @@ if (-not(Test-Path $RootDirectory)) {
 
 try {
     $TimeDelay = (Get-Date).AddHours(-$HoursDelay)
-    $resulttmp=Get-ChildItem -Path $RootDirectory -Recurse -Include *.$FileExtension -Exclude $LogfileName 
-    $result= $resulttmp | Where-Object { $_.LastWriteTime -lt $TimeDelay } 
+    $result=Get-ChildItem -Path $RootDirectory -Recurse -Include *.$FileExtension -Exclude $LogfileName | Where-Object { $_.LastWriteTime -lt $TimeDelay } 
     $NbFiles=$result.Count
     Write-Log -Level INFO -Message "Found ${NbFiles} files to delete"
 }
@@ -153,8 +152,7 @@ if ($ExitCode -eq 0)
             $fileName=$_.FullName
             Write-Log -Level INFO -Message "Starting the delete of ${fileName}"
             Remove-Item -Path $_.FullName -WhatIf
-        }
-        
+        }        
     }
     catch {    
         Write-Log -Level ERROR -Message "Problem when trying to remove ${fileName}"
@@ -176,7 +174,7 @@ if($ExitCode -eq 0){
     Write-Log -Level INFO -Message "Purge of .${FileExtension} files in ${RootDirectory} : Successful purge of ${NbFiles} files in ${PurgeDuration} seconds"
 }
 else{
-    Write-Log -Level ERROR -Message "Purge of .${FileExtension} files  in ${RootDirectory} : Failed in ${PurgeDuration} seconds"
+    Write-Log -Level ERROR -Message "Purge of .${FileExtension} files in ${RootDirectory} : Failed in ${PurgeDuration} seconds"
 }
 
 Wait-Logging
