@@ -1,0 +1,2 @@
+Add-DbaRegServer -SqlInstance localhost\DBA01 -ServerName MSSQLSERVER1 -Name "MSSQLSERVER1" -Description "MSSQLSERVER1 DWH" -Group "ALL"
+Add-DbaRegServer -SqlInstance localhost\DBA01 -ServerName MSSQLSERVER2 -Name "MSSQLSERVER2" -Description "MSSQLSERVER2 ERP" -Group "ALL"
