@@ -21,6 +21,9 @@
     .PARAMETER FileCount
         Number of files to split the backup (improve performance of backup and restore)
         Default 1
+
+    .PARAMETER FullBackupInterval
+        Specifies the number of days after the last full backup before triggering a new full backup if we do a backup Diff or Log. If the time elapsed since the last full backup exceeds this interval, a new full backup will be initiated. (Default : 15 days)
         
     .PARAMETER LogDirectory
         Directory where a log file can be stored (Optionnal)
@@ -57,6 +60,7 @@ param
     [Parameter(Mandatory)] [string] $CMSSqlInstance,
     [Parameter(Mandatory)] [string] $ExecDirectory,
     [Parameter()] [Int16] $FileCount = 1,
+    [Parameter()] [Int16] $FullBackupInterval = 15,
     [Parameter()] [string] $Group = "All",
     [Parameter()] [Int16] $Timeout = 3600,
     [Parameter()] [string] $LogLevel = "INFO",
@@ -85,7 +89,7 @@ $TimestampLog=Get-Date -UFormat "%Y-%m-%d_%H%M%S"
 #############################################################################################
 ## BACKUP PREPARATION : Get Instances in CMS to run BackupDatabasesOneInstance.ps1 script
 #############################################################################################
-$InstancesName=Get-DbaRegServer -SqlInstance $CMSSqlInstance -Group $Group | select -Unique Name
+$InstancesName=Get-DbaRegServer -SqlInstance $CMSSqlInstance -Group $Group | Select-Object -Unique Name
 $CMSBackupStartTimeStamp = Get-Date -UFormat "%Y-%m-%d %H:%M:%S"
 
 Write-Log -Level DEBUG -Message "Starting backup of ${Group} group of the CMS ${CMSSqlInstance} at ${CMSBackupStartTimeStamp}"
@@ -98,7 +102,7 @@ $InstancesName |  ForEach-Object {
     $InstanceName=$_.Name
     Write-Log -Level DEBUG -Message "Starting backup of instance ${InstanceName}"
     cd $ExecDirectory
-    .\BackupDatabasesOneInstance.ps1 -SqlInstance $InstanceName -BackupType $BackupType -FileCount $FileCount -BackupDirectory $BackupDirectory -LogDirectory $LogDirectory -LogSQLInstance $LogSQLInstance -LogDatabase $LogDatabase
+    .\BackupDatabasesOneInstance.ps1 -SqlInstance $InstanceName -BackupType $BackupType -FileCount $FileCount -FullBackupInterval $FullBackupInterval -BackupDirectory $BackupDirectory -LogDirectory $LogDirectory -LogSQLInstance $LogSQLInstance -LogDatabase $LogDatabase
     $RC=$LASTEXITCODE
     if($RC -ne 0){
         $FailedInstance+=$InstanceName

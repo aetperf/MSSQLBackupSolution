@@ -18,6 +18,9 @@
     .PARAMETER FileCount
         Number of files to split the backup (improve performance of backup and restore)
         Default 1
+
+    .PARAMETER FullBackupInterval
+        Specifies the number of days after the last full backup before triggering a new full backup if we do a backup Diff or Log. If the time elapsed since the last full backup exceeds this interval, a new full backup will be initiated. (Default : 15 days)
             
     .PARAMETER LogDirectory
     Directory where a log file can be stored (Optionnal)
@@ -57,6 +60,7 @@ param
     [Parameter(Mandatory)] [ValidateSet('Full','Diff','Log')] [string] $BackupType,
     [Parameter(Mandatory)] [string] $BackupDirectory,
     [Parameter()] [Int16] $FileCount = 1,
+    [Parameter()] [Int16] $FullBackupInterval = 15,
     [Parameter()] [string] $LogLevel = "INFO",
     [Parameter()] [string] $LogDirectory,
     [Parameter()] [string] $LogSQLInstance = "localhost\DBA01",
@@ -148,9 +152,22 @@ $Databases |  ForEach-Object {
     $InstanceName=$_.InstanceName
     $ComputerName=$_.ComputerName
     $FullUserName="${Env:UserDomain}\${Env:UserName}"
+    $LastFullBackup=$_.LastFullBackup
 
     try{
         ### BACKUP using dbatools
+        $CurrentDateTime= [DateTime]::ParseExact($DatabaseBackupStartTimeStamp, "yyyy-MM-dd HH:mm:ss", [System.Globalization.CultureInfo]::InvariantCulture)
+        #Backup Full if the last full backup is more than $FullBackupInterval days and the backup type is Diff or Log
+        if((($CurrentDateTime-$LastFullBackup).TotalDays -gt $FullBackupInterval) -and ($Backuptype -eq "Diff" -or $Backuptype -eq "Log")){
+            $SilentRes=Backup-DbaDatabase -SqlInstance $SqlInstance -Database $DatabaseName -Type "Full" -CompressBackup -Checksum -Verify -FileCount $FileCount -Path "${BackupDirectory}\servername\instancename\dbname\backuptype" -FilePath "servername_dbname_backuptype_timestamp.bak" -TimeStampFormat "yyyyMMdd_HHmm" -ReplaceInName -CreateFolder -WarningVariable WarningVariable -OutVariable BackupResults -EnableException
+        
+            $BackupDuration = $BackupResults.Duration
+            $BackupCompressedSize = $BackupResults.CompressedBackupSize
+            Write-DbaDbTableData -SqlInstance $logSQLInstance -Database $logDatabase -InputObject $BackupResults -Table dbo.BackupResults -AutoCreateTable -UseDynamicStringLength
+            $SuccessfulMessage = "Backup Full of ${SqlInstance} - Database : ${DatabaseName} : Successful in ${BackupDuration} and ${BackupCompressedSize}"
+            Write-Log -Level INFO -Message $SuccessfulMessage
+        }
+
         $SilentRes=Backup-DbaDatabase -SqlInstance $SqlInstance -Database $DatabaseName -Type $BackupType -CompressBackup -Checksum -Verify -FileCount $FileCount -Path "${BackupDirectory}\servername\instancename\dbname\backuptype" -FilePath "servername_dbname_backuptype_timestamp.${BackupExtension}" -TimeStampFormat "yyyyMMdd_HHmm" -ReplaceInName -CreateFolder -WarningVariable WarningVariable -OutVariable BackupResults -EnableException
         
         $BackupDuration = $BackupResults.Duration
@@ -166,14 +183,14 @@ $Databases |  ForEach-Object {
         Write-Log -Level ERROR -Message $ErrorMessage
         # get all error messages in case of multiple warning/error messages
         if ($WarningVariable)
-                 {  
+                {  
                     $ErrorMessage = ""
                     foreach ($warning in $WarningVariable) {
                         $ErrorMessage += $warning.Message
                         $dbatoolsmessage = $warning.Message
                         Write-Log -Level ERROR -Message $dbatoolsmessage                        
                     }
-                 }
+                }
 
         $Message= "InstanceName : ${SqlInstance} | Database : ${DatabaseName} | Type : ${BackupType} | Error Message : ${ErrorMessage}"
 
