@@ -89,11 +89,23 @@ $TimestampLog=Get-Date -UFormat "%Y-%m-%d_%H%M%S"
 #############################################################################################
 ## BACKUP PREPARATION : Get Instances in CMS to run BackupDatabasesOneInstance.ps1 script
 #############################################################################################
-$InstancesName=Get-DbaRegServer -SqlInstance $CMSSqlInstance -Group $Group | Select-Object -Unique Name
-$CMSBackupStartTimeStamp = Get-Date -UFormat "%Y-%m-%d %H:%M:%S"
 
-Write-Log -Level DEBUG -Message "Starting backup of ${Group} group of the CMS ${CMSSqlInstance} at ${CMSBackupStartTimeStamp}"
-$FailedInstance=@()
+try {
+    $InstancesName=Get-DbaRegServer -SqlInstance $CMSSqlInstance -Group $Group -EnableException -WarningVariable warningVariable | Select-Object -Unique Name
+    $CMSBackupStartTimeStamp = Get-Date -UFormat "%Y-%m-%d %H:%M:%S"
+
+    Write-Log -Level DEBUG -Message "Starting backup of ${Group} group of the CMS ${CMSSqlInstance} at ${CMSBackupStartTimeStamp}"
+    $FailedInstance=@()
+}
+catch {
+    Write-Log -Level ERROR -Message "Impossible to connect to CMS instance : ${SqlInstance}"
+    $WarningVariable.Message | ForEach-Object{
+        Write-Log -Level ERROR -Message $_
+    }
+    
+    Exit 1
+}
+
 
 #############################################################################################
 ## BACKUP : run BackupDatabasesOneInstance.ps1 script for Each Instance found
