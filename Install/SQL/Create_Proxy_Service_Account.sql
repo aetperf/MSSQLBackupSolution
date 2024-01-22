@@ -1,7 +1,7 @@
 USE [msdb]
 GO
 
-EXEC msdb.dbo.sp_add_proxy @proxy_name=N'Proxy_MSSQLBackup_Service',@credential_name=N'ServiceAccount4MSSQLBackups', 
+EXEC msdb.dbo.sp_add_proxy @proxy_name=N'Proxy_MSSQLBackup_Service',@credential_name=N'ServiceAccount_MSSQLBackups', 
 		@enabled=1
 GO
 

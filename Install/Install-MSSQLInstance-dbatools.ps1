@@ -13,7 +13,7 @@ $FeatureList="SQLEngine,Conn"
 $AuthenticationMode="Mixed"
 
 $CurrentUser=$Env:UserDomain+"\"+$Env:UserName
-$AdminAccount=$CurrentUser
+$AdminAccount=@($CurrentUser,"BUILTIN\Administrators")
 
 $Configuration=@{
 FEATURES = $FeatureList

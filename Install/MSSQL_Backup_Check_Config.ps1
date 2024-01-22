@@ -86,11 +86,13 @@ if ($installedModuleDbatools -eq $null) {
     $reponse = Read-Host "Do you want to install it (Y/N) "
     if($reponse -eq "Y"){
         Install-Module dbatools -Force 
+        Set-DbatoolsInsecureConnection -Scope SystemDefault
     }
     else{
         exit 1
     }
 } else {
+    Set-DbatoolsInsecureConnection -Scope SystemDefault
     Write-Host "Module Dbatools already installed"
 }
 
