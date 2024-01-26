@@ -7,10 +7,6 @@
     the value for the proxy server
     .PARAMETER proxyBypass
     the value for the proxy bypass
-    .PARAMETER LogDirectory
-    Directory where a log file can be stored (Optionnal)
-    .PARAMETER LogLevel
-    Level of logging (Optionnal) : INFO, WARNING, ERROR; Default : INFO
 
     .NOTES
         Tags: DisasterRecovery, Backup, Restore
@@ -23,31 +19,16 @@
         Compatibility : Powershell 5+
     .EXAMPLE
     PS C:\> .\ActivateProxy.ps1 -proxyServer "http://proxy:8080" -proxyBypass "*.local;169.254.*;10.*;192.168.*" -LogDirectory "C:\MSSQL_Backup\Logs"
-    PS C:\> .\ActivateProxy.ps1 -proxyServer "10.1.2.3:8080" -proxyBypass "*.local;" -LogDirectory ".\Logs"
+    PS C:\> .\ActivateProxy.ps1 -proxyServer "10.1.2.3:8080" -proxyBypass "*.local;"
 
     #>
 
 param 
 (
     [Parameter(Mandatory)] [string] $proxyServer,
-    [Parameter(Mandatory)] [string] $proxyBypass,
-    [Parameter()] [string] $LogDirectory,
-    [Parameter()] [string] $LogLevel = "INFO"
+    [Parameter(Mandatory)] [string] $proxyBypass
     
 )
-
-if ($PSBoundParameters.ContainsKey('LogDirectory'))
-{   
-    if ($LogDirectory -ne "")
-    {
-        $TimestampLog=Get-Date -UFormat "%Y-%m-%d_%H%M%S"
-        mkdir $LogDirectory -Force
-        $LogfileName="ActivateProxy_${TimestampLog}.log"
-        $LogFile= Join-DbaPath -Path $LogDirectory -Child $LogfileName
-        Add-LoggingTarget -Name File -Configuration @{Level = 'INFO'; Path = $LogFile}
-        Write-Log -Level INFO -Message "Log File : $LogFile"
-    }
-}
 
 try {
 
@@ -63,13 +44,13 @@ $ieZone = Get-ItemProperty -Path $iePath
 Set-ItemProperty -Path $iePath -Name ProxySettingsPerUser -Value 0
 $ieZone | ForEach-Object { $_.ProxySettingsPerUser = 0 }
 
-Write-Log -Level INFO -Message "Proxy settings set to $proxyServer"
+Write-Host "Proxy settings set to $proxyServer"
     
 }
 catch {
     
-    Write-Log -Level ERROR -Message "Error setting proxy settings"
-    Write-Log -Level ERROR -Message $_.Exception.Message
+    Write-Host "Error setting proxy settings"
+    Write-Host $_.Exception.Message
     exit 1
 }
 
