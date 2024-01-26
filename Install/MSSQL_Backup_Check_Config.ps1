@@ -24,10 +24,7 @@
         Website: 
         Copyright: (c) 2022 by Romain Ferraton, licensed under MIT
         License: MIT https://opensource.org/licenses/MIT
-        
-        Dependencies : 
-            Install-Module Logging
-            Install-Module dbatools           
+        Version: 1.0.0         
 
         Compatibility : Powershell 5+
 
@@ -48,14 +45,14 @@ param
 )
 
 ########################################################################################################################  
-## BEGIN INTERNET ACCESS CHECK : check internet access of AD
+## BEGIN INTERNET ACCESS CHECK : check internet access 
 ########################################################################################################################  
-Write-Host "Internet Access Check of AD"
+Write-Host "Internet Access Check"
 $internetAccess = Test-Connection -ComputerName "www.google.com" -Count 2 -Quiet
 if ($internetAccess) {
-    Write-Host "AD has Internet Access"
+    Write-Host "You have Internet Access" -ForegroundColor Green
 } else {
-    Write-Host "AD has not Internet Access"
+    Write-Host "You don't have Internet Access" -ForegroundColor Red
     Exit 1
 }
 
@@ -69,14 +66,14 @@ if ($installedModuleLogging -eq $null) {
     Write-Host "Module Logging not installed"
     $reponse = Read-Host "Do you want to install it (Y/N) "
     if($reponse -eq "Y"){
-        Install-Module Logging -Force 
-        Import-Module Logging
+        Install-Module Logging -Scope AllUsers -Force 
+        Import-Module Logging -Scope SystemDefault
     }
     else{
         exit 1
     }
 } else {
-    Import-Module Logging
+    Import-Module Logging -Scope SystemDefault
     Write-Host "Module Logging already installed"
 }
 
@@ -85,7 +82,7 @@ if ($installedModuleDbatools -eq $null) {
     Write-Host "Module Dbatools not installed"
     $reponse = Read-Host "Do you want to install it (Y/N) "
     if($reponse -eq "Y"){
-        Install-Module dbatools -Force 
+        Install-Module dbatools -Scope AllUsers -Force
         Set-DbatoolsInsecureConnection -Scope SystemDefault
     }
     else{
@@ -132,9 +129,9 @@ if ($PSBoundParameters.ContainsKey('LogDirectory'))
 Write-Log -Level INFO -Message "Service Account Check on AD"                                                                               
 $adUser = Get-ADUser -Filter {SamAccountName -eq $serviceAccount}
 if ($adUser -ne $null) {
-    Write-Log -Level INFO -Message "Service Account : ${serviceAccount} has been created on the AD"
+    Write-Log -Level INFO -Message "Service Account : ${serviceAccount} has been created on the AD ==> OK"
 } else {
-    Write-Log -Level ERROR -Message "Service Account : ${serviceAccount} has not been created on the AD"
+    Write-Log -Level ERROR -Message "Service Account : ${serviceAccount} has not been created on the AD ==> KO"
 }
 
 ########################################################################################################################
@@ -161,9 +158,9 @@ foreach ($server in $configList) {
     Remove-PSSession $session
 
     if ($isAdmin -ne $null) {
-        Write-Log -Level INFO -Message "Service Account : ${serviceAccount} has been added to the local administrators group"
+        Write-Log -Level INFO -Message "Service Account : ${serviceAccount} has been added to the local administrators group on ${serverName} ==> OK"
     } else {
-        Write-Log -Level ERROR -Message "Service Account : ${serviceAccount} has not been added to the local administrators group"
+        Write-Log -Level ERROR -Message "Service Account : ${serviceAccount} has not been added to the local administrators group on ${serverName} ==> KO"
     }
     $serverResults[$serverName]=$isAdmin
 }
