@@ -32,7 +32,7 @@
         
     .EXAMPLE
         PS C:\> .\MSSQL_Backup_Check_Config.ps1 -serviceAccount "SVC_SQLBackup" -configFilePath "C:\MSSQL_Backup\MSSQL_BackupSolution.config" -LogDirectory "C:\MSSQL_Backup\Logs"
-        
+        PS C:\> .\MSSQL_Backup_Check_Config.ps1 -serviceAccount "SVC_SQLBackup" -configFilePath ".\MSSQL_BackupSolution.config" -LogDirectory ".\Logs"
     #>
 
 param 
