@@ -144,7 +144,7 @@ try {
         Exit 1
     }
     else {
-        Write-Log -Level INFO -Message "INSTALL MSSQLBACKUP SOLUTION : SUCCEFULL"
+        Write-Log -Level INFO -Message "INSTALL MSSQLBACKUP SOLUTION : SUCCESSFULL"
         Exit 0
     }   
 
