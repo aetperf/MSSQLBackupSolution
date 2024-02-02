@@ -23,6 +23,18 @@ Add-LoggingTarget -Name Console -Configuration @{
     Level='DEBUG'
 }
 
+
+if ($LogDirectory -ne "")
+{
+    $TimestampLog=Get-Date -UFormat "%Y-%m-%d_%H%M%S"
+    $Silentmkdir = mkdir $LogDirectory -Force
+    $LogfileName="MSSQL_Backup_Solution_Install_${TimestampLog}.log"
+    $LogFile= Join-DbaPath -Path $LogDirectory -Child $LogfileName
+    Add-LoggingTarget -Name File -Configuration @{Level = 'INFO'; Path = $LogFile}
+    Write-Log -Level INFO -Message "Log File : $LogFile"
+}
+
+
 ########################################################################################################################  
 ## INSTALL
 ########################################################################################################################
@@ -30,97 +42,97 @@ Add-LoggingTarget -Name Console -Configuration @{
 try {
     $WarningCount = 0
 
-    Write-Log -Level INFO -Message "Starting installation of the solution MSSQL_BackupSolution"
+    Write-Log -Level INFO -Message "INSTALL MSSQLBACKUP SOLUTION : STARTING"
 
     # Activate proxy settings ========================================================
-    Write-Log -Level INFO -Message "Activate proxy settings"
+    Write-Log -Level INFO -Message "ACTIVATE PROXY SETTINGS : STARTING"
     .\ActivateProxy.ps1 -proxyServer $proxyServer -proxyBypass $proxyBypass
     if ($LASTEXITCODE -ne 0){
         if ($Force -eq $false){
-            Write-Log -Level ERROR -Message "FAILED : Error during the activation of the proxy settings"
+            Write-Log -Level ERROR -Message "ACTIVATE PROXY SETTINGS : FAILED"
             Exit 1
         }
         else{
-            Write-Log -Level WARNING -Message "FAILED : Error during the activation of the proxy settings but force mode is activated"
+            Write-Log -Level WARNING -Message "ACTIVATE PROXY SETTINGS : FAILED but force mode is activated"
             $WarningCount++
         }
         
     }
     else {
-        Write-Log -Level INFO -Message "Activate proxy settings : Successful"
+        Write-Log -Level INFO -Message "ACTIVATE PROXY SETTINGS : SUCCESSFUL"
     }
     
 
     # Checks prerequisites ========================================================
-    Write-Log -Level INFO -Message "Checks prerequisites"
-    .\MSSQL_Backup_Check_Config.ps1 -serviceAccount $serviceAccount -configFilePath $configFilePath -LogDirectory $LogDirectory
+    Write-Log -Level INFO -Message "CHECKS PREREQUISITES : STARTING"
+    .\MSSQL_Backup_Check_Config.ps1 -serviceAccount $serviceAccount -configFilePath $configFilePath
     if ($LASTEXITCODE -ne 0){
         if ($Force -eq $false){
-            Write-Log -Level ERROR -Message "FAILED : Error during the checks prerequisites"
+            Write-Log -Level ERROR -Message "CHECKS PREREQUISITES : FAILED"
             Exit 1
         }
         else{
-            Write-Log -Level WARNING -Message "FAILED : Error during the checks prerequisites but force mode is activated"
+            Write-Log -Level WARNING -Message "CHECKS PREREQUISITES : FAILED but force mode is activated"
             $WarningCount++
         }
     }
     else {
-        Write-Log -Level INFO -Message "Checks prerequisites : Successful"
+        Write-Log -Level INFO -Message "CHECKS PREREQUISITES : SUCCESSFUL"
     }
     
 
 
     # Install MSSQL Instance ========================================================
-    Write-Log -Level INFO -Message "Install MSSQL Instance DBA01"
+    Write-Log -Level INFO -Message "INSTALL MSSQL INSTANCE DBA01 : STARTING"
     .\Install-MSSQLInstance-dbatools.ps1
     if ($LASTEXITCODE -ne 0){
         if ($Force -eq $false){
-            Write-Log -Level ERROR -Message "FAILED : Error during the installation of MSSQL Instance DBA01"
+            Write-Log -Level ERROR -Message "INSTALL MSSQL INSTANCE DBA01 : FAILED"
             Exit 1
         }
         else{
-            Write-Log -Level WARNING -Message "FAILED : Error during the installation of MSSQL Instance DBA01 but force mode is activated"
+            Write-Log -Level WARNING -Message "INSTALL MSSQL INSTANCE DBA01 : FAILED but force mode is activated"
             $WarningCount++
         }
     }
     else {
-        Write-Log -Level INFO -Message "Install MSSQL Instance DBA01 : Successful"
+        Write-Log -Level INFO -Message "INSTALL MSSQL INSTANCE DBA01 : SUCCESSFUL"
     }
     
 
     # Create SQL Objects ========================================================
-    Write-Log -Level INFO -Message "Create SQL Objects"
-    .\Create_SQL_Object.ps1 -SqlInstanceCMS $SqlInstanceCMS -SourceSQLPath ".\SQL" -serviceAccount $serviceAccount -LogDirectory $LogDirectory -Force $Force
+    Write-Log -Level INFO -Message "CREATE SQL OBJECTS : STARTING"
+    .\Create_SQL_Object.ps1 -SqlInstanceCMS $SqlInstanceCMS -SourceSQLPath ".\SQL" -serviceAccount $serviceAccount -Force $Force
     if ($LASTEXITCODE -ne 0){
         if ($Force -eq $false){
-            Write-Log -Level ERROR -Message "FAILED : Error during the creation of SQL Objects"
+            Write-Log -Level ERROR -Message "CREATE SQL OBJECTS : FAILED"
             Exit 1
         }
         else{
-            Write-Log -Level WARNING -Message "FAILED : Error during the creation of SQL Objects but force mode is activated"
+            Write-Log -Level WARNING -Message "CREATE SQL OBJECTS : FAILED but force mode is activated"
             $WarningCount++
         }
     }    
     else {
-        Write-Log -Level INFO -Message "Create SQL Objects : Successful"
+        Write-Log -Level INFO -Message "CREATE SQL OBJECTS : SUCCESSFUL"
     }
     
 
     # Init CMS ========================================================
-    Write-Log -Level INFO -Message "Init CMS"
-    .\Init_CMS.ps1 -SqlInstanceCMS $SqlInstanceCMS -configFilePath $configFilePath -GroupName "ALL" -LogDirectory $LogDirectory
+    Write-Log -Level INFO -Message "INIT CMS : STARTING"
+    .\Init_CMS.ps1 -SqlInstanceCMS $SqlInstanceCMS -configFilePath $configFilePath -GroupName "ALL"
     if ($LASTEXITCODE -ne 0){
         if ($Force -eq $false){
-            Write-Log -Level ERROR -Message "FAILED : Error during the init of CMS"
+            Write-Log -Level ERROR -Message "INIT CMS : FAILED"
             Exit 1
         }
         else{
-            Write-Log -Level WARNING -Message "FAILED : Error during the init of CMS but force mode is activated"
+            Write-Log -Level WARNING -Message "INIT CMS : FAILED but force mode is activated"
             $WarningCount++
         }
     }
     else {
-        Write-Log -Level INFO -Message "Init CMS : Successful"
+        Write-Log -Level INFO -Message "INIT CMS : SUCCESSFUL"
     }
     
 
@@ -128,17 +140,17 @@ try {
     # Finish ========================================================
 
     if ($WarningCount -gt 0){
-        Write-Log -Level WARNING -Message "WARNING : $WarningCount warning(s) during the installation of the solution with force mode activated"
+        Write-Log -Level WARNING -Message "INSTALL MSSQLBACKUP SOLUTION : WARNING $WarningCount warning(s) during the installation of the solution with force mode activated"
         Exit 1
     }
     else {
-        Write-Log -Level INFO -Message "SUCCESS : Installation of the solution MSSQL_BackupSolution Completed"
+        Write-Log -Level INFO -Message "INSTALL MSSQLBACKUP SOLUTION : SUCCEFULL"
         Exit 0
     }   
 
     
 }
 catch {
-    Write-Log -Level ERROR -Message "FAILED : Error during the installation of the solution"
+    Write-Log -Level ERROR -Message "INSTALL MSSQLBACKUP SOLUTION : FAILED"
     Exit 2
 }

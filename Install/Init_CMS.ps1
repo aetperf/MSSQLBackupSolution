@@ -4,7 +4,7 @@ param
     [Parameter(Mandatory)] [string] $SqlInstanceCMS = "localhost\DBA01",
     [Parameter(Mandatory)] [string] $configFilePath = ".\MSSQL_BackupSolution.config",
     [Parameter(Mandatory)] [string] $GroupName = "ALL",
-    [Parameter()] [string] $LogDirectory = ".\Logs",
+    [Parameter()] [string] $LogDirectory,
     [Parameter()] [string] $LogLevel = "INFO"
     
 )

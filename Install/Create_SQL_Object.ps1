@@ -4,7 +4,7 @@ param
     [Parameter(Mandatory)] [string] $SqlInstanceCMS = "localhost\DBA01",
     [Parameter(Mandatory)] [string] $SourceSQLPath = ".\SQL",
     [Parameter(Mandatory)] [string] $serviceAccount,
-    [Parameter()] [string] $LogDirectory = ".\Logs",
+    [Parameter()] [string] $LogDirectory,
     [Parameter()] [string] $LogLevel = "INFO",
     [Parameter()] [bool] $Force = $false
 )

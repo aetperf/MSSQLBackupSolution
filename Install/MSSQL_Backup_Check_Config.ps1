@@ -39,10 +39,12 @@
     (
         [Parameter(Mandatory)] [string] $serviceAccount,
         [Parameter(Mandatory)] [string] $configFilePath,
-        [Parameter()] [string] $LogDirectory = ".\Logs",
+        [Parameter()] [string] $LogDirectory,
         [Parameter()] [string] $LogLevel = "INFO"
         
     )
+
+    $failedcount = 0
     
     [System.Net.WebRequest]::DefaultWebProxy = [System.Net.WebRequest]::GetSystemWebProxy()
     [System.Net.WebRequest]::DefaultWebProxy.Credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials
@@ -54,8 +56,10 @@
     $internetAccess = Test-Connection -ComputerName "www.microsoft.com" -Count 2 -Quiet
     if ($internetAccess) {
         Write-Host "You have Internet Access" -ForegroundColor Green
+        $Checks_Internet_Access = $true
     } else {
         Write-Host "You don't have Internet Access. Internet access is needed to install dbatools and logging powershell modules" -ForegroundColor Red
+        $Checks_Internet_Access = $false
         Exit 1
     }
     
@@ -73,13 +77,16 @@
         if($reponse -eq "Y"){
             Install-Module Logging -Scope AllUsers -Force 
             Import-Module Logging -Scope Global
+            $Checks_Powershell_Logging_Module = $true
         }
         else{
+            $Checks_Powershell_Logging_Module = $false
             exit 1
         }
     } else {
         $SilentimportResult = Import-Module Logging -Scope Global
         Write-Host "Module Logging already installed"
+        $Checks_Powershell_Logging_Module = $true
     }
     
     $installedModuleDbatools = Get-InstalledModule -Name "Dbatools" -ErrorAction SilentlyContinue
@@ -89,13 +96,16 @@
         if($reponse -eq "Y"){
             Install-Module dbatools -Scope AllUsers -Force
             Set-DbatoolsInsecureConnection -Scope SystemDefault -OutVariable $DbatoolsInsecureConnection
+            $Checks_Powershell_dbatools_Module = $true
         }
         else{
+            $Checks_Powershell_dbatools_Module = $false
             exit 1
         }
     } else {
         $SilentsetdbatoolsinsecureResult = Set-DbatoolsInsecureConnection -Scope SystemDefault
         Write-Host "Module Dbatools already installed"
+        $Checks_Powershell_dbatools_Module = $true
     }
     
     ########################################################################################################################  
@@ -133,9 +143,11 @@
     $serviceAccountObject = Get-ADUser -Identity $serviceAccount -ErrorAction SilentlyContinue
     if ($serviceAccountObject -eq $null) {
         Write-Log -Level ERROR -Message  "Service Account ${serviceAccount} not found in the AD ==> KO"
+        $Checks_Service_Account_Exist_in_AD = $false
         exit 1
     } else {
         Write-Log -Level INFO -Message "Service Account ${serviceAccount} found in the AD ==> OK"
+        $Checks_Service_Account_Exist_in_AD = $true
         # Retrieve the groups of ther service account
         $serviceAccountADGroups = Get-ADUser -Identity $serviceAccount -Properties memberOf | Select-Object -ExpandProperty memberOf | Get-ADGroup
     
@@ -190,16 +202,23 @@
             $isAdminIndirectAD = $AdminADGroupMembers | Where-Object { $_.Name -match $serviceAccount }
     
     
-            if($isAdminIndirectAD){
+            if($isAdminIndirectAD -ne $null){
                 Write-Log -Level INFO -Message "Service Account ${serviceAccount} is member of an AD group who is member of the local administrators group on ${env:COMPUTERNAME} ==> OK"
             }
             else {
                 Write-Log -Level ERROR -Message "Service Account ${serviceAccount} is not found in any AD members of the local administrators group on ${env:COMPUTERNAME} ==> KO"
-                exit 1
+                
             }
     
         }
         
+    }
+
+    if (($isAdminDirect -ne $null) -or ($isAdminIndirectLocal -ne $null) -or ($isAdminIndirectAD -ne $null)) {
+        $Checks_Service_Account_Member_of_Administrators_Group_on_CMS = $true
+    } else {
+        $Checks_Service_Account_Member_of_Administrators_Group_on_CMS = $false
+        $failedcount++
     }
     
     ########################################################################################################################
@@ -239,8 +258,6 @@
         write-log -Level INFO -Message $server
     }
 
-
-
     foreach ($server in $serverlist) {
         $isAdmin = $false
         $userName=$cred.UserName
@@ -266,6 +283,9 @@
             } 
             else 
             {
+                Write-Log -Level INFO -Message "Service Account : ""${serviceAccount}"" is not a direct member of the local administrators group on ${server} ==> Continue to search on AD Group"
+
+                
                 $AdminADGroup = $RemoteAdminGroupMembers | Where-Object { ($_.ObjectClass -eq "Group") -and ($_.PrincipalSource -eq "ActiveDirectory")  }
     
                 # remove domain prefix from the name of $AdminADGroup
@@ -281,7 +301,7 @@
                 $isAdminIndirectAD = $AdminADGroupMembers | Where-Object { $_.Name -match $serviceAccount }
         
         
-                if($isAdminIndirectAD){
+                if($isAdminIndirectAD -ne $null){
                     Write-Log -Level INFO -Message "Service Account ${serviceAccount} is member of an AD group who is member of the local administrators group on ${env:COMPUTERNAME} ==> OK"
                     $isAdmin = $true
                 }
@@ -292,11 +312,6 @@
 
             }
                 
-            
-        
-    
-    
-        
     
         if ($isAdmin) {
             Write-Log -Level INFO -Message "Service Account : ""${serviceAccount}"" has been added to the local administrators group on ${serverName} ==> OK"
@@ -317,20 +332,26 @@
     ## BEGIN SUMMARY OF CHECK
     ######################################################################################################################## 
     Write-Log -Level INFO -Message "SUMMARY CHECK : "
-    Write-Log -Level INFO -Message "Internet access check : Successful"
-    Write-Log -Level INFO -Message "Install of module Logging : Successful"
-    Write-Log -Level INFO -Message "Install of module Dbatools : Successful"
+    Write-Log -Level INFO -Message "Internet access check : ${Checks_Internet_Access}"
+    Write-Log -Level INFO -Message "Install of module Logging : ${Checks_Powershell_Logging_Module}"
+    Write-Log -Level INFO -Message "Install of module Dbatools : ${Checks_Powershell_dbatools_Module}"
+    Write-Log -Level INFO -Message "Service Account Member of Administrators Group on CMS : ${Checks_Service_Account_Member_of_Administrators_Group_on_CMS}"
+    
     foreach ($key in $serverResults.Keys) {
         $value = $serverResults[$key]
         if($value -eq $true){
-            Write-Log -Level INFO -Message "Service Account added to local administrators on ${key} : Successful"
+            Write-Log -Level INFO -Message "Service Account added to local administrators on ${key} : $true"          
         }
         else{
-            Write-Log -Level ERROR -Message "Service Account added to local administrators on ${key} : Failed"
+            Write-Log -Level ERROR -Message "Service Account added to local administrators on ${key} : $false"
+            $failedcount++
         }
     }
-    
-    
-    
-    
-    
+
+    if ($failedcount -eq 0) {
+        Write-Log -Level INFO -Message "All checks are successful"
+    } else {
+        Write-Log -Level INFO -Message "Some checks are failed"
+    }
+
+    exit $failedcount
