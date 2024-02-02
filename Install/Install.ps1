@@ -5,7 +5,8 @@ $proxyBypass = "*.mh.lvmh;10.*"
 $configFilePath = ".\MSSQL_BackupSolution.config"
 $LogDirectory = ".\Logs" # scripts logs directory
 $LogLevel = "DEBUG" # DEBUG, INFO, ERROR
-$Force = "True" # True, False
+$Force = $true # True, False
+$SqlInstanceCMS = "localhost\DBA01"
 
 
 ########################################################################################################################  
@@ -35,7 +36,7 @@ try {
     Write-Log -Level INFO -Message "Activate proxy settings"
     .\ActivateProxy.ps1 -proxyServer $proxyServer -proxyBypass $proxyBypass
     if ($LASTEXITCODE -ne 0){
-        if ($Force -eq "False"){
+        if ($Force -eq $false){
             Write-Log -Level ERROR -Message "FAILED : Error during the activation of the proxy settings"
             Exit 1
         }
@@ -54,7 +55,7 @@ try {
     Write-Log -Level INFO -Message "Checks prerequisites"
     .\MSSQL_Backup_Check_Config.ps1 -serviceAccount $serviceAccount -configFilePath $configFilePath -LogDirectory $LogDirectory
     if ($LASTEXITCODE -ne 0){
-        if ($Force -eq "False"){
+        if ($Force -eq $false){
             Write-Log -Level ERROR -Message "FAILED : Error during the checks prerequisites"
             Exit 1
         }
@@ -73,7 +74,7 @@ try {
     Write-Log -Level INFO -Message "Install MSSQL Instance DBA01"
     .\Install-MSSQLInstance-dbatools.ps1
     if ($LASTEXITCODE -ne 0){
-        if ($Force -eq "False"){
+        if ($Force -eq $false){
             Write-Log -Level ERROR -Message "FAILED : Error during the installation of MSSQL Instance DBA01"
             Exit 1
         }
@@ -89,9 +90,9 @@ try {
 
     # Create SQL Objects ========================================================
     Write-Log -Level INFO -Message "Create SQL Objects"
-    .\MSSQL_Create_SQL_Object.ps1 -serviceAccount $serviceAccount -LogDirectory $LogDirectory
+    .\Create_SQL_Object.ps1 -SqlInstanceCMS $SqlInstanceCMS -SourceSQLPath ".\SQL" -serviceAccount $serviceAccount -LogDirectory $LogDirectory -Force $Force
     if ($LASTEXITCODE -ne 0){
-        if ($Force -eq "False"){
+        if ($Force -eq $false){
             Write-Log -Level ERROR -Message "FAILED : Error during the creation of SQL Objects"
             Exit 1
         }
@@ -107,9 +108,9 @@ try {
 
     # Init CMS ========================================================
     Write-Log -Level INFO -Message "Init CMS"
-    .\MSSQL_Init_CMS.ps1 -configFilePath $configFilePath -LogDirectory $LogDirectory
+    .\Init_CMS.ps1 -SqlInstanceCMS $SqlInstanceCMS -configFilePath $configFilePath -GroupName "ALL" -LogDirectory $LogDirectory
     if ($LASTEXITCODE -ne 0){
-        if ($Force -eq "False"){
+        if ($Force -eq $false){
             Write-Log -Level ERROR -Message "FAILED : Error during the init of CMS"
             Exit 1
         }

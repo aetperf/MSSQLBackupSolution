@@ -13,10 +13,10 @@ $FeatureList="SQLEngine,Conn"
 $AuthenticationMode="Mixed"
 
 $adminGroup = Get-LocalGroup -SID "S-1-5-32-544"
-$adminGroupMembers = Get-LocalGroupMember -Group $adminGroup.Name
+$adminGroupName = $adminGroup.Name
 
 $CurrentUser=$Env:UserDomain+"\"+$Env:UserName
-$AdminAccount=@($CurrentUser,"BUILTIN\${adminGroupMembers}")
+$AdminAccount=@($CurrentUser,"BUILTIN\${adminGroupName}")
 
 $Configuration=@{
 FEATURES = $FeatureList

@@ -28,7 +28,7 @@ if ($PSBoundParameters.ContainsKey('LogDirectory'))
     if ($LogDirectory -ne "")
     {
         $TimestampLog=Get-Date -UFormat "%Y-%m-%d_%H%M%S"
-        mkdir $LogDirectory -Force
+        $SilentRes = mkdir $LogDirectory -Force
         $LogfileName="MSSQL_Init_CMS_${TimestampLog}.log"
         $LogFile= Join-DbaPath -Path $LogDirectory -Child $LogfileName
         Add-LoggingTarget -Name File -Configuration @{Level = 'INFO'; Path = $LogFile}

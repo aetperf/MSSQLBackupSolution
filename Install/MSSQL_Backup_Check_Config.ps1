@@ -186,7 +186,6 @@
                 $AdminADGroupMembers += Get-ADGroupMember -Identity $group -Recursive | Where-Object { $_.objectClass -eq "user" }
             }
 
-    
             # test if we found the service account in the $AdminADGroupMembers variable
             $isAdminIndirectAD = $AdminADGroupMembers | Where-Object { $_.Name -match $serviceAccount }
     
@@ -240,74 +239,77 @@
         write-log -Level INFO -Message $server
     }
 
+
+
     foreach ($server in $serverlist) {
-        $serverName = $server -split '\\' | Select-Object -First 1
+        $isAdmin = $false
         $userName=$cred.UserName
-        Write-Log -Level INFO -Message "Try Connect to : ${serverName} with ${userName}." 
+        Write-Log -Level INFO -Message "Try Connect to : ${server} with ${userName}." 
     
         try {
-        $session = New-PSSession -ComputerName $serverName -Credential $cred
+        $session = New-PSSession -ComputerName $server -Credential $cred
     
-        $isAdmin = Invoke-Command -Session $session -ScriptBlock {
-            param($serviceAccount)
-            param($serviceAccountgroups)
+        #Get the list of members of the local administrators group on the target server
+        $RemoteAdminGroupMembers = Invoke-Command -Session $session -ScriptBlock {
             ## check for the local group Administrators whatever the language of the OS
             $adminGroup = Get-LocalGroup -SID "S-1-5-32-544"
             $LocalAdminGroupMembers = Get-LocalGroupMember -Group $adminGroup.Name
+            return $LocalAdminGroupMembers
+        }
     
             # check if the service account is member of the local group Administrators 
             # or if it is member of a group who is member of the local group Administrators
-            $isAdminDirect = $LocalAdminGroupMembers | Where-Object { $_.Name -match $serviceAccount }
+            $isAdminDirect = $RemoteAdminGroupMembers | Where-Object { $_.Name -match $serviceAccount }
             if ($isAdminDirect -ne $null) {
-                Write-Log -Level INFO -Message "Service Account : ""${serviceAccount}"" is a direct member of the local administrators group on ${env:COMPUTERNAME} ==> OK"
-                return 0
+                Write-Log -Level INFO -Message "Service Account : ""${serviceAccount}"" is a direct member of the local administrators group on ${server} ==> OK"
+                $isAdmin = $true
             } 
-            else {
-                Write-Log -Level INFO -Message "Service Account ${serviceAccount} is not a direct member of the local administrators group on ${env:COMPUTERNAME} ==> Continue to search on Local Group"
-                
-                # Test if the service account is member of a local group who is member of the local group Administrators
-                $isAdminIndirectLocal = $LocalAdminGroupMembers | Where-Object { ($_.ObjectClass -eq "Group") -and ($_.PrincipalSource -ne "ActiveDirectory")  } | Where-Object { (Get-LocalGroupMember -Group $_.Name).Name -match $serviceAccount }
+            else 
+            {
+                $AdminADGroup = $RemoteAdminGroupMembers | Where-Object { ($_.ObjectClass -eq "Group") -and ($_.PrincipalSource -eq "ActiveDirectory")  }
     
-                if ($isAdminIndirectLocal -ne $null) {
-                    Write-Log -Level INFO -Message "Service Account : ""${serviceAccount}"" is member of a local group who is member of the local administrators group  on ${env:COMPUTERNAME} ==> OK"
-                    return 0
-                } 
-                else {
-                    # test if at least one group of the $serviceAccountGroups variable match at least one group of the $adminGroupMembers variable                    
-                    $isAdminIndirectAD=@()
-                    foreach ($group in $serviceAccountgroups) {
-                        $isAdminIndirectAD[$group] = $LocalAdminGroupMembers | Where-Object { ($_.ObjectClass -eq "Group") -and ($_.PrincipalSource -eq "ActiveDirectory")  } | Where-Object { $_.Name -match $group.Name }
-                        Write-Log -Level INFO -Message "Service Account : ${serviceAccount} is member of the AD Group : ${group} who is member of the local administrators group  on ${env:COMPUTERNAME} ==> OK"
-                    }
-                    if($isAdminIndirectAD -ne $null){
-                        Write-Log -Level INFO -Message "Service Account : ${serviceAccount} is member of an AD group who is member of the local administrators group  on ${env:COMPUTERNAME} ==> OK"
-                        return 0
-                    }
-                    else {
-                        Write-Log -Level ERROR -Message "Service Account : ${serviceAccount} is not member of the local administrators group  on ${env:COMPUTERNAME} ==> KO"
-                        return 1
-                    }
-    
+                # remove domain prefix from the name of $AdminADGroup
+                $AdminADGroupName = $AdminADGroup | Select-Object -ExpandProperty Name | ForEach-Object { $_ -replace ".*\\" }
+
+                # get members of the $AdminADGroupName groups using recursive Get-AdGroupMember (using a foreach loop)
+                $AdminADGroupMembers = @()
+                foreach ($group in $AdminADGroupName) {
+                    $AdminADGroupMembers += Get-ADGroupMember -Identity $group -Recursive | Where-Object { $_.objectClass -eq "user" }
                 }
-                
+
+                # test if we found the service account in the $AdminADGroupMembers variable
+                $isAdminIndirectAD = $AdminADGroupMembers | Where-Object { $_.Name -match $serviceAccount }
+        
+        
+                if($isAdminIndirectAD){
+                    Write-Log -Level INFO -Message "Service Account ${serviceAccount} is member of an AD group who is member of the local administrators group on ${env:COMPUTERNAME} ==> OK"
+                    $isAdmin = $true
+                }
+                else {
+                    Write-Log -Level ERROR -Message "Service Account ${serviceAccount} is not found in any AD members of the local administrators group on ${env:COMPUTERNAME} ==> KO"
+                    $isAdmin = $false
+                }
+
             }
-        } -ArgumentList $serviceAccount $serviceAccountGroups
+                
+            
+        
     
     
         
     
-        if ($isAdmin -eq 0) {
+        if ($isAdmin) {
             Write-Log -Level INFO -Message "Service Account : ""${serviceAccount}"" has been added to the local administrators group on ${serverName} ==> OK"
         } else {
             Write-Log -Level ERROR -Message "Service Account : ""${serviceAccount}"" has not been added to the local administrators group on ${serverName} ==> KO"
         }
-        $serverResults[$serverName]=$isAdmin
+        $serverResults[$server]=$isAdmin
     
         Remove-PSSession $session
         }
         catch {
             Write-Log -Level ERROR -Message "Error during the New-PSSession connection to the server : ${serverName} with the service account : ""${serviceAccount}"""
-            exit 1
+            $serverResults[$server]=$false
         }
     }
     
@@ -320,7 +322,7 @@
     Write-Log -Level INFO -Message "Install of module Dbatools : Successful"
     foreach ($key in $serverResults.Keys) {
         $value = $serverResults[$key]
-        if($value -eq 0){
+        if($value -eq $true){
             Write-Log -Level INFO -Message "Service Account added to local administrators on ${key} : Successful"
         }
         else{

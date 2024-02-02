@@ -6,7 +6,7 @@ param
     [Parameter(Mandatory)] [string] $serviceAccount,
     [Parameter()] [string] $LogDirectory = ".\Logs",
     [Parameter()] [string] $LogLevel = "INFO",
-    [Parameter()] [string] $Force = "False"
+    [Parameter()] [bool] $Force = $false
 )
 
 
@@ -29,7 +29,7 @@ if ($PSBoundParameters.ContainsKey('LogDirectory'))
     if ($LogDirectory -ne "")
     {
         $TimestampLog=Get-Date -UFormat "%Y-%m-%d_%H%M%S"
-        mkdir $LogDirectory -Force
+        $SilentRes = mkdir $LogDirectory -Force
         $LogfileName="MSSQL_Create_SQL_Object_${TimestampLog}.log"
         $LogFile= Join-DbaPath -Path $LogDirectory -Child $LogfileName
         Add-LoggingTarget -Name File -Configuration @{Level = 'INFO'; Path = $LogFile}
@@ -40,19 +40,38 @@ if ($PSBoundParameters.ContainsKey('LogDirectory'))
 ########################################################################################################################  
 ## CREATE DATABASE MSSQLSolutionDB
 ######################################################################################################################## 
-Write-Log -Level INFO -Message "Create Database MSSQLSolutionDB"
+Write-Log -Level INFO -Message "Create MSSQLSolutionDB Objects on ${SqlInstanceCMS}"
 
 try {
-    if ($Force -eq "True") {
-        Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database master -Query "DROP DATABASE IF EXISTS [MSSQLSolutionDB];" -ErrorAction Stop
-        Write-Log -Level INFO -Message "Drop of database MSSQLSolutionDB : Successful"
+
+    if ($Force -eq $true) {        
+        Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database master -Query "DROP DATABASE IF EXISTS [MSSQLBackupSolutionDB];" -ErrorAction Stop -WarningAction SilentlyContinue
+        Write-Log -Level INFO -Message "Drop of database MSSQLBackupSolutionDB : Successful"
+        Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database master -Query "EXEC msdb.dbo.sp_delete_job @job_name=N'MSSQLBackupSolution-CMS-Backup-Full-ALL';" -ErrorAction Stop -WarningAction SilentlyContinue
+        Write-Log -Level INFO -Message "Drop of job MSSQLBackupSolution-CMS-Backup-Full-ALL : Successful"
+        Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database master -Query "EXEC msdb.dbo.sp_delete_job @job_name=N'MSSQLBackupSolution-CMS-Backup-Diff-ALL';" -ErrorAction Stop -WarningAction SilentlyContinue
+        Write-Log -Level INFO -Message "Drop of job MSSQLBackupSolution-CMS-Backup-Diff-ALL : Successful"
+        Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database master -Query "EXEC msdb.dbo.sp_delete_job @job_name=N'MSSQLBackupSolution-CMS-Backup-Log-ALL';" -ErrorAction Stop -WarningAction SilentlyContinue
+        Write-Log -Level INFO -Message "Drop of job MSSQLBackupSolution-CMS-Backup-Log-ALL : Successful"
+        Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database master -Query "EXEC msdb.dbo.sp_delete_job @job_name=N'MSSQLBackupSolution-Purge-BackupCentral';" -ErrorAction Stop -WarningAction SilentlyContinue
+        Write-Log -Level INFO -Message "Drop of job MSSQLBackupSolution-Purge-BackupCentral : Successful"
+        Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database master -Query "EXEC msdb.dbo.sp_delete_job @job_name=N'MSSQLBackupSolution-Purge-Remote-FromCMS';" -ErrorAction Stop -WarningAction SilentlyContinue
+        Write-Log -Level INFO -Message "Drop of job MSSQLBackupSolution-Purge-Remote-FromCMS : Successful"
+        Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database master -Query "EXEC msdb.dbo.sp_delete_proxy @proxy_name=N'Proxy_MSSQLBackup_Service';" -ErrorAction Stop -WarningAction SilentlyContinue
+        Write-Log -Level INFO -Message "Drop of proxy Proxy_MSSQLBackup_Service : Successful"
+        Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database master -Query "DROP CREDENTIAL [ServiceAccount_MSSQLBackups];" -ErrorAction Stop -WarningAction SilentlyContinue
+        Write-Log -Level INFO -Message "Drop of credential ServiceAccount_MSSQLBackups : Successful"
+
+        Write-Log -Level INFO -Message "Cleanup of MSSQLBackupSolutionDB objects : Successful"
+                
+
     }
 
-    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -File "$SourceSQLPath\Create_Database_MSSQLSolutionDB.sql" -ErrorAction Stop
-    Write-Log -Level INFO -Message "Creation of database MSSQLSolutionDB : Successful"
+    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -File "$SourceSQLPath\Create_Database_MSSQLBackupSolutionDB.sql" -QueryTimeout 30 -ErrorAction Stop -WarningAction Stop
+    Write-Log -Level INFO -Message "Creation of database MSSQLBackupSolutionDB : Successful"
 }
 catch {
-    Write-Log -Level ERROR -Message "Error during the creation of database MSSQLSolutionDB"
+    Write-Log -Level ERROR -Message "Error during the creation of database MSSQLBackupSolutionDB"
     exit 1
 }
 
@@ -62,7 +81,7 @@ catch {
 Write-Log -Level INFO -Message "Create table BackupResults"
 
 try {
-    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -File "$SourceSQLPath\Create_Table_BackupResult.sql" 
+    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database "MSSQLBackupSolutionDB" -File "$SourceSQLPath\Create_Table_BackupResult.sql" -QueryTimeout 5 -ErrorAction Stop 
     Write-Log -Level INFO -Message "Creation of table BackupResults : Successful"
 }
 catch {
@@ -83,7 +102,9 @@ if ($Credential -eq $null) {
 }
 
 try {
-    $identity=$Credential.UserName
+    $CurrentDomain=$Env:UserDomain
+    $UserName = $Credential.UserName
+    $identity="${CurrentDomain}\${UserName}"
     $securestring=$Credential.Password
     $Ptr = [System.Runtime.InteropServices.Marshal]::SecureStringToCoTaskMemUnicode($securestring)
     $secret = [System.Runtime.InteropServices.Marshal]::PtrToStringUni($Ptr)
@@ -91,7 +112,7 @@ try {
 
     $query="CREATE CREDENTIAL [ServiceAccount_MSSQLBackups] WITH IDENTITY = N'${identity}', SECRET = N'${secret}'" 
     Write-Log -Level INFO -Message "CREATE CREDENTIAL [ServiceAccount_MSSQLBackups] WITH IDENTITY = N'${identity}', SECRET = N'*********'"
-    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database master -Query $query -ErrorAction Stop
+    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database master -Query $query -QueryTimeout 15 -ErrorAction Stop 
     Write-Log -Level INFO -Message "Creation of credential : Successful"
 }
 catch {
@@ -178,6 +199,8 @@ catch {
     Write-Log -Level ERROR -Message "Error during the creation of jobs : Purge Remote"
     exit 1
 }
+
+exit 0
 
 
     
