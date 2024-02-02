@@ -1,18 +1,14 @@
 
 param 
 (
-    #[Parameter(Mandatory)] [string] $Login,
-    #[Parameter(Mandatory)] [string] $Password,
-    [Parameter(Mandatory)] [string] $SqlInstanceCMS,
-    [Parameter(Mandatory)] [string] $SourceSQLPath,
-    #[Parameter(Mandatory)] [PSCredential] $Credential,
-    [Parameter()] [string] $LogDirectory,
-    [Parameter()] [string] $LogLevel = "INFO"
+    [Parameter(Mandatory)] [string] $SqlInstanceCMS = "localhost\DBA01",
+    [Parameter(Mandatory)] [string] $SourceSQLPath = ".\SQL",
+    [Parameter(Mandatory)] [string] $serviceAccount,
+    [Parameter()] [string] $LogDirectory = ".\Logs",
+    [Parameter()] [string] $LogLevel = "INFO",
+    [Parameter()] [string] $Force = "False"
 )
 
-$User = "DESKTOP-I7IQL69\romain"
-$PWord = ConvertTo-SecureString -String "P@sSwOrd" -AsPlainText -Force
-$Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $User, $PWord
 
 ########################################################################################################################  
 ## LOGGING PREPARATION
@@ -47,7 +43,12 @@ if ($PSBoundParameters.ContainsKey('LogDirectory'))
 Write-Log -Level INFO -Message "Create Database MSSQLSolutionDB"
 
 try {
-    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -File "$SourceSQLPath\Create_Database_MSSQLSolutionDB.sql"
+    if ($Force -eq "True") {
+        Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database master -Query "DROP DATABASE IF EXISTS [MSSQLSolutionDB];" -ErrorAction Stop
+        Write-Log -Level INFO -Message "Drop of database MSSQLSolutionDB : Successful"
+    }
+
+    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -File "$SourceSQLPath\Create_Database_MSSQLSolutionDB.sql" -ErrorAction Stop
     Write-Log -Level INFO -Message "Creation of database MSSQLSolutionDB : Successful"
 }
 catch {
@@ -74,6 +75,13 @@ catch {
 ######################################################################################################################## 
 Write-Log -Level INFO -Message "Create Credential ServiceAccount_MSSQLBackups"
 
+$Credential = Get-Credential -UserName $serviceAccount -Message "Enter the password for the service account ${serviceAccount}"
+
+if ($Credential -eq $null) {
+    Write-Log -Level ERROR -Message "Error on the credential of ${serviceAccount}"
+    exit 1
+}
+
 try {
     $identity=$Credential.UserName
     $securestring=$Credential.Password
@@ -81,9 +89,9 @@ try {
     $secret = [System.Runtime.InteropServices.Marshal]::PtrToStringUni($Ptr)
     [System.Runtime.InteropServices.Marshal]::ZeroFreeCoTaskMemUnicode($Ptr)
 
-    $query="CREATE CREDENTIAL [ServiceAccount_MSSQLBackups] WITH IDENTITY = N'$identity', SECRET = N'$secret'" 
-    Write-Log -Level INFO -Message "CREATE CREDENTIAL [ServiceAccount_MSSQLBackups] WITH IDENTITY = N'$identity', SECRET = N'*********'"
-    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database master -Query $query
+    $query="CREATE CREDENTIAL [ServiceAccount_MSSQLBackups] WITH IDENTITY = N'${identity}', SECRET = N'${secret}'" 
+    Write-Log -Level INFO -Message "CREATE CREDENTIAL [ServiceAccount_MSSQLBackups] WITH IDENTITY = N'${identity}', SECRET = N'*********'"
+    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database master -Query $query -ErrorAction Stop
     Write-Log -Level INFO -Message "Creation of credential : Successful"
 }
 catch {
@@ -97,7 +105,7 @@ catch {
 Write-Log -Level INFO -Message "Create Proxy Proxy_MSSQLBackup_Service"
 
 try {
-    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database msdb -File "$SourceSQLPath\Create_Proxy_Service_Account.sql"
+    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database msdb -File "$SourceSQLPath\Create_Proxy_Service_Account.sql" -ErrorAction Stop
     Write-Log -Level INFO -Message "Creation of proxy : Successful"
 }
 catch {
@@ -111,7 +119,7 @@ catch {
 Write-Log -Level INFO -Message "Create jobs Backup Full"
 
 try {
-    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database msdb -File "$SourceSQLPath\Create_Jobs_BACKUP_FULL.sql"
+    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database msdb -File "$SourceSQLPath\Create_Jobs_BACKUP_FULL.sql" -ErrorAction Stop
     Write-Log -Level INFO -Message "Creation of jobs Backup Full : Successful"
 }
 catch {
@@ -124,7 +132,7 @@ catch {
 Write-Log -Level INFO -Message "Create jobs Backup Diff"
 
 try {
-    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database msdb -File "$SourceSQLPath\Create_Jobs_BACKUP_DIFF.sql"
+    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database msdb -File "$SourceSQLPath\Create_Jobs_BACKUP_DIFF.sql" -ErrorAction Stop
     Write-Log -Level INFO -Message "Creation of jobs Backup Diff : Successful"
 }
 catch {
@@ -137,7 +145,7 @@ catch {
 Write-Log -Level INFO -Message "Create jobs Backup Log"
 
 try {
-    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database msdb -File "$SourceSQLPath\Create_Jobs_BACKUP_LOG.sql"
+    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database msdb -File "$SourceSQLPath\Create_Jobs_BACKUP_LOG.sql" -ErrorAction Stop
     Write-Log -Level INFO -Message "Creation of jobs Backup Log : Successful"
 }
 catch {
@@ -150,7 +158,7 @@ catch {
 Write-Log -Level INFO -Message "Create jobs Purge Central"
 
 try {
-    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database msdb -File "$SourceSQLPath\Create_Jobs_PurgeCentral.sql"
+    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database msdb -File "$SourceSQLPath\Create_Jobs_PurgeCentral.sql" -ErrorAction Stop
     Write-Log -Level INFO -Message "Creation of jobs Purge Central : Successful"
 }
 catch {
@@ -163,7 +171,7 @@ catch {
 Write-Log -Level INFO -Message "Create jobs Purge Remote"
 
 try {
-    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database msdb -File "$SourceSQLPath\Create_Jobs_PurgeRemote.sql"
+    Invoke-DbaQuery -SqlInstance $SqlInstanceCMS -Database msdb -File "$SourceSQLPath\Create_Jobs_PurgeRemote.sql" -ErrorAction Stop
     Write-Log -Level INFO -Message "Creation of jobs Purge Remote : Successful"
 }
 catch {

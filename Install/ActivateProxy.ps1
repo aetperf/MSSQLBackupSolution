@@ -18,8 +18,8 @@
 
         Compatibility : Powershell 5+
     .EXAMPLE
-    PS C:\> .\ActivateProxy.ps1 -proxyServer "http://proxy:8080" -proxyBypass "*.local;169.254.*;10.*;192.168.*" -LogDirectory "C:\MSSQL_Backup\Logs"
-    PS C:\> .\ActivateProxy.ps1 -proxyServer "10.1.2.3:8080" -proxyBypass "*.local;"
+    PS C:\> .\ActivateProxy.ps1 -proxyServer "http://proxy:8080" -proxyBypass "*.local;169.254.*;10.*;192.168.*" -LogDirectory ".\Logs"
+    PS C:\> .\ActivateProxy.ps1 -proxyServer "10.1.2.3:8080" -proxyBypass "*.local;" -LogDirectory ".\Logs"
 
     #>
 
