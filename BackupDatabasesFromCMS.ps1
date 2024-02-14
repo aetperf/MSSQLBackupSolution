@@ -28,6 +28,12 @@
     .PARAMETER LogDirectory
         Directory where a log file can be stored (Optionnal)
 
+    .PARAMETER LogSQLInstance
+        SQL Server instance hosting the log database (Optionnal) default : localhost\DBA01
+
+    .PARAMETER LogDatabase
+        Log database name (Optionnal) default : MSSQLBackupSolutionDB
+
     .NOTES
         Tags: DisasterRecovery, Backup, Restore
         Author: Romain Ferraton, Pierre-Antoine Collet
