@@ -1,3 +1,5 @@
+USE [MSSQLBackupSolutionDB]
+GO
 
 CREATE TABLE [dbo].[BackupResults](
 	[BackupComplete] [bit] NULL,
