@@ -29,7 +29,7 @@
         Directory where a log file can be stored (Optionnal)
 
     .PARAMETER LogSQLInstance
-        SQL Server instance hosting the log database (Optionnal) default : localhost\DBA01
+        SQL Server instance hosting the log database (Optionnal) default : localhost
 
     .PARAMETER LogDatabase
         Log database name (Optionnal) default : MSSQLBackupSolutionDB
@@ -71,7 +71,7 @@ param
     [Parameter()] [Int16] $Timeout = 3600,
     [Parameter()] [string] $LogLevel = "INFO",
     [Parameter()] [string] $LogDirectory,
-    [Parameter()] [string] $LogSQLInstance = "localhost\DBA01",
+    [Parameter()] [string] $LogSQLInstance = "localhost",
     [Parameter()] [string] $LogDatabase = "MSSQLBackupSolutionDB"
 )
 
