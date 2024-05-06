@@ -28,6 +28,12 @@
     .PARAMETER LogDirectory
         Directory where a log file can be stored (Optionnal)
 
+    .PARAMETER LogSQLInstance
+        SQL Server instance hosting the log database (Optionnal) default : localhost
+
+    .PARAMETER LogDatabase
+        Log database name (Optionnal) default : MSSQLBackupSolutionDB
+
     .NOTES
         Tags: DisasterRecovery, Backup, Restore
         Author: Romain Ferraton, Pierre-Antoine Collet
@@ -65,7 +71,7 @@ param
     [Parameter()] [Int16] $Timeout = 3600,
     [Parameter()] [string] $LogLevel = "INFO",
     [Parameter()] [string] $LogDirectory,
-    [Parameter()] [string] $LogSQLInstance = "localhost\DBA01",
+    [Parameter()] [string] $LogSQLInstance = "localhost",
     [Parameter()] [string] $LogDatabase = "MSSQLBackupSolutionDB"
 )
 

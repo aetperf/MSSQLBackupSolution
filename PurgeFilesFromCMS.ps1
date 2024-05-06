@@ -97,7 +97,7 @@ Write-Log -Level INFO -Message "Starting Purge ${FileType} files for the ""${Gro
 #############################################################################################
 ## Purge : run PurgeFiles.ps1 Each Instance found
 #############################################################################################
-$FailedRobocopy=@()
+$FailedPurge=@()
 $ServersName |  ForEach-Object {
     $ComputerName=$_.ServerName
     

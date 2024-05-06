@@ -8,23 +8,22 @@
         The SQL Server instance hosting the CMS database to list instances to backup.
 
     .PARAMETER Group
-        The root group in the CMS from where SQLInstances to backup will be listed.
+        The root group in the CMS from where SQLInstances to backup will be listed. Default : "All"
 
     .PARAMETER CentralBackupDirectory
         directory where all the backup will be centralized
 
     .PARAMETER RemoteBackupDirectory
         root directory on the target computers
-
-    .PARAMETER FileCount
-        Number of files to split the backup (improve performance of backup and restore)
-        Default 1
         
     .PARAMETER ExecDirectory
         Directory of the script
     
     .PARAMETER LogDirectory
         Directory where a log file can be stored (Optionnal)
+
+    .PARAMETER LogLevel
+        Log Level (Default : INFO)
 
     .NOTES
         Tags: DisasterRecovery, Backup, Restore
@@ -117,7 +116,6 @@ $ServersName |  ForEach-Object {
         $FailedRobocopy+=$ComputerName
     }  
 }
-
 #############################################################################################
 ## LOG and EXITCODE
 #############################################################################################
@@ -125,8 +123,6 @@ $CMSRobocopyEndTimeStamp = Get-Date -UFormat "%Y-%m-%d %H:%M:%S"
 $tspan= New-TimeSpan -Start $CMSRobocopyStartTimeStamp -End $CMSRobocopyEndTimeStamp
 
 $CMSRobocopyDuration=$tspan.TotalSeconds
-
-
 
 if($FailedRobocopy.count -eq 0){
     $NbFailedRobocopy=0
@@ -141,7 +137,6 @@ else{
 }
 
 Wait-Logging
-
 $ExitCode=0
 if ($NbFailedRobocopy -gt 0)
 {$ExitCode=1}
