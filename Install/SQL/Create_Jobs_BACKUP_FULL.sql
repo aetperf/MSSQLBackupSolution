@@ -36,7 +36,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Backup-F
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'CmdExec', 
-		@command=N'powershell.exe -noprofile -executionpolicy bypass -File "D:\MSSQLBackupSolution\BackupDatabasesFromCMS.ps1" -CMSSqlInstance "localhost\DBA01" -Group "ALL" -BackupType "Full" -BackupDirectory "G:\BACKUPDB"  -LogDirectory "D:\MSSQLBackupSolution\Logs" -ExecDirectory "D:\MSSQLBackupSolution"', 
+		@command=N'powershell.exe -noprofile -executionpolicy bypass -File "D:\MSSQLBackupSolution\BackupDatabasesFromCMS.ps1" -CMSSqlInstance "localhost\DBA01" -Group "ALL" -BackupType "Full" -BackupDirectory "G:\BACKUPDB"  -LogDirectory "D:\MSSQLBackupSolution\Logs" -ExecDirectory "D:\MSSQLBackupSolution" -LogSQLInstance "localhost\DBA01"', 
 		@flags=32, 
 		@proxy_name=N'Proxy_MSSQLBackup_Service'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
