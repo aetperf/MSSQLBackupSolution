@@ -173,7 +173,7 @@ $Databases |  ForEach-Object {
 
         Write-Log -Level DEBUG -Message "dbatools command : Backup-DbaDatabase -SqlInstance ${SqlInstance} -Database ${DatabaseName} -Type ${BackupType} -CompressBackup -Checksum -Verify -FileCount ${FileCount} -Path ""${BackupDirectory}\servername\instancename\dbname\backuptype"" -FilePath ""servername_dbname_backuptype_timestamp.${BackupExtension}"" -TimeStampFormat ""yyyyMMdd_HHmm"" -ReplaceInName -CreateFolder -WarningVariable WarningVariable -OutVariable BackupResults -EnableException"
 
-        $SilentRes=Backup-DbaDatabase -SqlInstance $SqlInstance -Database $DatabaseName -Type $BackupType -CompressBackup -Checksum -Verify -FileCount $FileCount -Path "${BackupDirectory}\servername\instancename\dbname\backuptype" -FilePath "servername_dbname_backuptype_timestamp.${BackupExtension}" -TimeStampFormat "yyyyMMdd_HHmm" -ReplaceInName -CreateFolder -WarningVariable WarningVariable -OutVariable BackupResults -EnableException
+        $SilentRes=Backup-DbaDatabase -SqlInstance $SqlInstance -Database $DatabaseName -Type $BackupType -CompressBackup -Checksum -Verify -FileCount $FileCount -Path "${BackupDirectory}\servername\instancename\dbname\backuptype" -FilePath "servername_dbname_backuptype_timestamp.${BackupExtension}" -TimeStampFormat "yyyyMMdd_HHmm" -ReplaceInName -CreateFolder -NoAppendDbNameInPath -WarningVariable WarningVariable -OutVariable BackupResults -EnableException
         
         $BackupDuration = $BackupResults.Duration
         $BackupCompressedSize = $BackupResults.CompressedBackupSize
