@@ -1,11 +1,10 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [MSSQLBackupSolution-CMS-Robocopy_Alone]    Script Date: 12/1/2023 4:16:40 PM ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [Database Maintenance]    Script Date: 12/1/2023 4:16:40 PM ******/
+
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'Database Maintenance' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'Database Maintenance'
@@ -25,9 +24,6 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'MSSQLBackupSolution-CMS-Robo
 		@category_name=N'Database Maintenance', 
 		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Backup-Full-CMS-ALL]    Script Date: 12/1/2023 4:16:40 PM ******/
-
-/****** Object:  Step [Robocopy-CMS-ALL]    Script Date: 12/1/2023 4:16:40 PM ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Robocopy-CMS-ALL', 
 		@step_id=1, 
 		@cmdexec_success_code=0, 
@@ -44,18 +40,18 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Robocopy
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Monday 3h', 
+EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Daily 3h', 
 		@enabled=1, 
-		@freq_type=8, 
+		@freq_type=4, 
 		@freq_interval=1, 
 		@freq_subday_type=1, 
 		@freq_subday_interval=0, 
 		@freq_relative_interval=0, 
-		@freq_recurrence_factor=1, 
+		@freq_recurrence_factor=0, 
 		@active_start_date=20231031, 
 		@active_end_date=99991231, 
-		@active_start_time=030000, 
-		@active_end_time=035959
+		@active_start_time=30000, 
+		@active_end_time=235959
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
@@ -65,4 +61,5 @@ QuitWithRollback:
     IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
 EndSave:
 GO
+
 
