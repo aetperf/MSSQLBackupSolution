@@ -160,7 +160,7 @@ $Databases |  ForEach-Object {
         #Backup Full if the last full backup is more than $FullBackupInterval days and the backup type is Diff or Log
         if((($CurrentDateTime-$LastFullBackup).TotalDays -gt $FullBackupInterval) -and ($Backuptype -eq "Diff" -or $Backuptype -eq "Log")){
             
-            Write-Log -Level DEBUG -Message "dbatools command : Backup-DbaDatabase -SqlInstance ${SqlInstance} -Database ${DatabaseName} -Type Full -CompressBackup -Checksum -Verify -FileCount ${FileCount} -Path ""${BackupDirectory}\servername\instancename\dbname\Full"" -FilePath ""servername_dbname_Full_timestamp.${BackupExtension}"" -TimeStampFormat ""yyyyMMdd_HHmm"" -ReplaceInName -CreateFolder -WarningVariable WarningVariable -OutVariable BackupResults -EnableException"
+            Write-Log -Level DEBUG -Message "dbatools command : Backup-DbaDatabase -SqlInstance ${SqlInstance} -Database ${DatabaseName} -Type Full -CompressBackup -Checksum -Verify -FileCount ${FileCount} -Path ""${BackupDirectory}\servername\instancename\dbname\Full"" -FilePath ""servername_dbname_Full_timestamp.${BackupExtension}"" -TimeStampFormat ""yyyyMMdd_HHmm"" -ReplaceInName -CreateFolder -NoAppendDbNameInPath -WarningVariable WarningVariable -OutVariable BackupResults -EnableException"
 
             $SilentRes=Backup-DbaDatabase -SqlInstance $SqlInstance -Database $DatabaseName -Type "Full" -CompressBackup -Checksum -Verify -FileCount $FileCount -Path "${BackupDirectory}\servername\instancename\dbname\Full" -FilePath "servername_dbname_Full_timestamp.bak" -TimeStampFormat "yyyyMMdd_HHmm" -ReplaceInName -CreateFolder -NoAppendDbNameInPath -WarningVariable WarningVariable -OutVariable BackupResults -EnableException
         
@@ -171,7 +171,7 @@ $Databases |  ForEach-Object {
             Write-Log -Level INFO -Message $SuccessfulMessage
         }
 
-        Write-Log -Level DEBUG -Message "dbatools command : Backup-DbaDatabase -SqlInstance ${SqlInstance} -Database ${DatabaseName} -Type ${BackupType} -CompressBackup -Checksum -Verify -FileCount ${FileCount} -Path ""${BackupDirectory}\servername\instancename\dbname\backuptype"" -FilePath ""servername_dbname_backuptype_timestamp.${BackupExtension}"" -TimeStampFormat ""yyyyMMdd_HHmm"" -ReplaceInName -CreateFolder -WarningVariable WarningVariable -OutVariable BackupResults -EnableException"
+        Write-Log -Level DEBUG -Message "dbatools command : Backup-DbaDatabase -SqlInstance ${SqlInstance} -Database ${DatabaseName} -Type ${BackupType} -CompressBackup -Checksum -Verify -FileCount ${FileCount} -Path ""${BackupDirectory}\servername\instancename\dbname\backuptype"" -FilePath ""servername_dbname_backuptype_timestamp.${BackupExtension}"" -TimeStampFormat ""yyyyMMdd_HHmm"" -ReplaceInName -CreateFolder -NoAppendDbNameInPath -WarningVariable WarningVariable -OutVariable BackupResults -EnableException"
 
         $SilentRes=Backup-DbaDatabase -SqlInstance $SqlInstance -Database $DatabaseName -Type $BackupType -CompressBackup -Checksum -Verify -FileCount $FileCount -Path "${BackupDirectory}\servername\instancename\dbname\backuptype" -FilePath "servername_dbname_backuptype_timestamp.${BackupExtension}" -TimeStampFormat "yyyyMMdd_HHmm" -ReplaceInName -CreateFolder -NoAppendDbNameInPath -WarningVariable WarningVariable -OutVariable BackupResults -EnableException
         
