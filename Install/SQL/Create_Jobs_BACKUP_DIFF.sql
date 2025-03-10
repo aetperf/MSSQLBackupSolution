@@ -1,11 +1,11 @@
 USE [msdb]
 GO
 
-/****** Object:  Job [MSSQLBackupSolution-CMS-Backup-Diff-ALL]    Script Date: 12/1/2023 4:17:14 PM ******/
+/****** Object:  Job [MSSQLBackupSolution-CMS-Backup-Diff-ALL]    Script Date: 10/03/2025 21:15:14 ******/
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT
 SELECT @ReturnCode = 0
-/****** Object:  JobCategory [Database Maintenance]    Script Date: 12/1/2023 4:17:14 PM ******/
+/****** Object:  JobCategory [Database Maintenance]    Script Date: 10/03/2025 21:15:14 ******/
 IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'Database Maintenance' AND category_class=1)
 BEGIN
 EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'Database Maintenance'
@@ -25,24 +25,9 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'MSSQLBackupSolution-CMS-Back
 		@category_name=N'Database Maintenance', 
 		@owner_login_name=N'sa', @job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Backup-Diff-CMS-ALL]    Script Date: 12/1/2023 4:17:14 PM ******/
+/****** Object:  Step [Backup-Diff-CMS-ALL]    Script Date: 10/03/2025 21:15:14 ******/
 EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Backup-Diff-CMS-ALL', 
 		@step_id=1, 
-		@cmdexec_success_code=0, 
-		@on_success_action=3, 
-		@on_success_step_id=0, 
-		@on_fail_action=2, 
-		@on_fail_step_id=0, 
-		@retry_attempts=0, 
-		@retry_interval=0, 
-		@os_run_priority=0, @subsystem=N'CmdExec', 
-		@command=N'powershell.exe -noprofile -executionpolicy bypass -File "D:\MSSQLBackupSolution\BackupDatabasesFromCMS.ps1" -CMSSqlInstance "localhost\DBA01" -Group "ALL" -BackupType "Diff" -BackupDirectory "G:\BACKUPDB"  -LogDirectory "D:\MSSQLBackupSolution\Logs" -ExecDirectory "D:\MSSQLBackupSolution" -LogSQLInstance "localhost\DBA01"', 
-		@flags=32, 
-		@proxy_name=N'Proxy_MSSQLBackup_Service'
-IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-/****** Object:  Step [Robocopy-CMS-ALL]    Script Date: 12/1/2023 4:17:14 PM ******/
-EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Robocopy-CMS-ALL', 
-		@step_id=2, 
 		@cmdexec_success_code=0, 
 		@on_success_action=1, 
 		@on_success_step_id=0, 
@@ -51,7 +36,7 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Robocopy
 		@retry_attempts=0, 
 		@retry_interval=0, 
 		@os_run_priority=0, @subsystem=N'CmdExec', 
-		@command=N'powershell.exe -noprofile -executionpolicy bypass -file "D:\MSSQLBackupSolution\RobocopyFromCMS.ps1" -CMSSqlInstance "localhost\DBA01" -Group "All" -CentralBackupDirectory "G:\MSSQLBackupsCentral" -RemoteBackupDirectory "G$\BACKUPDB" -LogDirectory "D:\MSSQLBackupSolution\Logs" -ExecDirectory "D:\MSSQLBackupSolution"', 
+		@command=N'powershell.exe -noprofile -executionpolicy bypass -File "D:\MSSQLBackupSolution\BackupDatabasesFromCMS.ps1" -CMSSqlInstance "localhost\DBA01" -Group "ALL" -BackupType "Diff" -BackupDirectory "G:\BACKUPDB"  -LogDirectory "D:\MSSQLBackupSolution\Logs" -ExecDirectory "D:\MSSQLBackupSolution" -LogSQLInstance "localhost\DBA01"', 
 		@flags=32, 
 		@proxy_name=N'Proxy_MSSQLBackup_Service'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
